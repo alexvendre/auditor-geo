@@ -11,6 +11,13 @@ node auditor-geo.js https://tudominio.com
 node auditor-geo.js https://tudominio.com --json
 ```
 
+> **En este repositorio hay dos auditores independientes:**
+>
+> | Herramienta | Para qué sirve |
+> |---|---|
+> | [`auditor-geo.js`](auditor-geo.js) | Si una IA puede encontrarte, entenderte y citarte. Es el que se explica abajo |
+> | [`auditor-web.js`](auditor-web.js) | Salud técnica y coherencia de un sitio entero, recorriendo su sitemap. [Documentación](README-auditor-web.md) |
+
 ---
 
 ## Por qué existe
@@ -101,6 +108,28 @@ positivo de bots, el JSON-LD fugado y el primer párrafo medido desde el `<h1>`�
 reales que me encontré, no de una lista de buenas prácticas.
 
 Lo cuento entero en la [guía de GEO y AEO](https://alexvendrell.wordpress.com/guia-geo-aeo/).
+
+---
+
+## El otro auditor: `auditor-web.js`
+
+Audita un sitio **entero** a partir de su sitemap, no una URL suelta. Existe porque, al reposicionar
+una web, los fallos seguían apareciendo *después* de darla por terminada, y todos tenían la misma
+causa: **el fallo no vive en el contenido**. El H1 sale del título, la meta description del extracto,
+el `alt` de la biblioteca de medios. Puedes releer el cuerpo diez veces y no ver ninguno.
+
+```bash
+node auditor-web.js https://tudominio.com
+node auditor-web.js https://tudominio.com --json
+```
+
+Comprueba salud técnica por URL, los campos que no son contenido, restos de un posicionamiento
+anterior, **coherencia entre páginas** (que tu cargo y tus datos se escriban igual en todas partes),
+enlazado interno con detección de huérfanas, e imágenes y peso de carga.
+
+Tiene una lección incorporada que sirve para cualquier herramienta de SEO: **una regla mal calibrada
+es peor que no tenerla**. Las tres primeras versiones daban avisos que no eran fallos, y un informe
+con ruido se deja de leer. Está contado en su [documentación](README-auditor-web.md).
 
 ---
 

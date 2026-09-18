@@ -154,7 +154,10 @@ function comprobarCitabilidad(html) {
     const primero = parrafos[0];
     // Ojo con los límites de palabra: "consiste" no casa con "consisten".
     const esDirecto = primero.length <= 400 &&
-      /\b(es|son|eres|consist\w+|signific\w+|se trata|sirve\w*|permit\w+|ayud\w+)\b/i.test(primero.slice(0, 220));
+      // "soy" y "somos" cuentan: en una marca personal la respuesta directa a
+      // "quién es esto" empieza casi siempre en primera persona, y dejarlas
+      // fuera marcaba como indirecta la portada más directa posible.
+      /\b(es|son|eres|soy|somos|consist\w+|signific\w+|se trata|sirve\w*|permit\w+|ayud\w+)\b/i.test(primero.slice(0, 220));
     anota('Citabilidad', esDirecto ? 'ok' : 'avi', esDirecto ? 'Responde pronto y en corto' : 'El primer párrafo no responde directamente',
       esDirecto ? `"${primero.slice(0, 110)}…"` : 'Pon la respuesta en el primer párrafo: un modelo no lee 800 palabras para encontrarla.');
   }

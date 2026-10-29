@@ -107,7 +107,7 @@ Escrito mientras reposicionaba mi propia web. Las tres comprobaciones menos habi
 positivo de bots, el JSON-LD fugado y el primer párrafo medido desde el `<h1>`— salieron de problemas
 reales que me encontré, no de una lista de buenas prácticas.
 
-Lo cuento entero en la [guía de GEO y AEO](https://alexvendrell.wordpress.com/guia-geo-aeo/).
+Lo cuento entero en la [guía de GEO y AEO](https://alexvendrell.com/guia-geo-aeo/).
 
 ---
 
@@ -137,7 +137,7 @@ con ruido se deja de leer. Está contado en su [documentación](README-auditor-w
 
 **Alex Vendrell Torres** — Marketing y comunicación · SEO, GEO y AEO · Sabadell (Barcelona)
 
-- Web: [alexvendrell.wordpress.com](https://alexvendrell.wordpress.com)
+- Web: [alexvendrell.com](https://alexvendrell.com)
 - LinkedIn: [alex-vendrell-torres](https://www.linkedin.com/in/alex-vendrell-torres/)
 
 ## Licencia

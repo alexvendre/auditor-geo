@@ -173,6 +173,39 @@ Informe
 ```
 </details>
 
+### Comparar con la auditoría anterior
+
+```bash
+node bin/auditor.js https://cliente.es --sitio --json informes/2026-10.json        # octubre
+node bin/auditor.js https://cliente.es --sitio --comparar informes/2026-10.json --html  # noviembre
+```
+
+El informe añade una sección **Evolución** con lo resuelto, lo nuevo, lo que mejora y lo que
+empeora. Avisa si las dos auditorías usan reglas o alcance distintos, porque entonces parte de la
+diferencia no se debe a cambios en la web. Es la prueba de «antes y después» de un proyecto.
+
+### Generar borradores del arreglo
+
+```bash
+node bin/auditor.js generar llms   https://tudominio.com --salida llms.txt   # desde el sitemap
+node bin/auditor.js generar robots https://tudominio.com                     # bloque para bots de IA
+node bin/auditor.js generar schema https://tudominio.com --tipo persona      # o organizacion | negocio
+```
+
+Usa los datos reales de la web (títulos, descripciones, perfiles, teléfono) y marca con
+`[COMPLETAR]` lo que no puede saber. Son borradores: hay que revisarlos antes de publicarlos.
+
+### Usarlo desde Claude u otro asistente (MCP)
+
+`bin/mcp.js` es un servidor [MCP](https://modelcontextprotocol.io) sin dependencias. Expone cuatro
+herramientas: `auditar_web`, `estudio_linkedin_ssi`, `visibilidad_ia` y `generar_borrador`.
+
+```json
+{ "mcpServers": { "auditor-geo": { "command": "node", "args": ["/ruta/a/auditor-geo/bin/mcp.js"] } } }
+```
+
+Con Claude Code: `claude mcp add auditor-geo -- node /ruta/a/auditor-geo/bin/mcp.js`.
+
 ### El proyecto de auditoría
 
 Para auditorías que se repiten (un cliente cada trimestre, tu propia marca cada mes), define todo en
@@ -235,6 +268,22 @@ visibilidad), **medio**, **bajo** e **info** (contexto, sin acción).
   obstáculos técnicos, definir bien la entidad, responder mejor que otros y medir con método.
 - **Privacidad.** Los datos de LinkedIn se procesan en local; las claves de API se leen del entorno
   y no se guardan en informes ni historiales.
+
+## Hoja de ruta
+
+Ideas evaluadas tras revisar otros proyectos abiertos de GEO y SEO. Están ordenadas por valor.
+
+- **Análisis de registros del servidor**: qué bots de IA visitan de verdad la web, con qué
+  frecuencia y qué páginas. Es la única prueba directa de rastreo (con verificación de IP de los
+  rangos publicados por OpenAI, Anthropic, Perplexity, Google y Bing).
+- **Mediciones de IA programadas** con varias muestras por consulta y votación por mayoría, para
+  separar tendencia de ruido. Opcionalmente, sentimiento de la mención con un modelo juez.
+- **Acción de GitHub** lista para usar en integración continua.
+- **Lista de rastreadores de IA** sincronizada con el registro abierto
+  [ai.robots.txt](https://github.com/ai-robots-txt/ai.robots.txt).
+- **Conexión con Search Console y Bing Webmaster Tools** (OAuth) para cruzar la auditoría con
+  impresiones, clics e indexación reales.
+- **Interfaz en inglés y catalán.**
 
 ## Lo que no hace
 

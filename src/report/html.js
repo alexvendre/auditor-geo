@@ -197,6 +197,21 @@ ${inf.linkedin ? '<p><strong>LinkedIn.</strong> LinkedIn no permite leer el SSI 
 
 function modulos(inf) {
   const out = [];
+  const cmp = inf.comparacion;
+  if (cmp) {
+    const fila = (cls, etiqueta, x, txt) => `<tr><td class="${cls}">${etiqueta}</td><td>${esc(x.titulo)}</td><td>${esc(txt)}</td></tr>`;
+    const filas = [
+      ...cmp.resueltos.map(x => fila('si', 'Resuelto', x, `${x.antes} → 0`)),
+      ...cmp.mejoran.map(x => fila('si', 'Mejora', x, `${x.antes} → ${x.ahora}`)),
+      ...cmp.empeoran.map(x => fila('no', 'Empeora', x, `${x.antes} → ${x.ahora}`)),
+      ...cmp.nuevos.map(x => fila('no', 'Nuevo', x, `0 → ${x.ahora}`))
+    ];
+    out.push(`<section id="evolucion"><h2>Evolución</h2>
+<p class="dim">Respecto a la auditoría del ${esc(cmp.fechaAnterior ? new Date(cmp.fechaAnterior).toLocaleDateString('es-ES') : '—')}.</p>
+<div class="cifras"><div class="cifra"><b>${cmp.casosAntes} → ${cmp.casosAhora}</b>casos a revisar</div><div class="cifra ok"><b>${cmp.resueltos.length}</b>problemas resueltos</div><div class="cifra ${cmp.nuevos.length ? 'alto' : 'ok'}"><b>${cmp.nuevos.length}</b>problemas nuevos</div></div>
+${(cmp.avisos || []).map(a => `<p class="dim"><strong>Ojo:</strong> ${esc(a)}</p>`).join('')}
+${filas.length ? `<div class="tabla"><table><thead><tr><th>Cambio</th><th>Comprobación</th><th>Casos</th></tr></thead><tbody>${filas.join('')}</tbody></table></div>` : '<p>Sin cambios.</p>'}</section>`);
+  }
   const li = inf.linkedin;
   if (li && li.ssi) {
     const x = li.ssi;

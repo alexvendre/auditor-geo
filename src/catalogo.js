@@ -136,6 +136,8 @@ const C = {
     porque: 'La propuesta define un H1 con el nombre, un resumen en cita (>) y listas de enlaces. Sin esa estructura pierde la utilidad que pretende tener.',
     arreglo: 'Empieza por "# Nombre", sigue con "> resumen" y agrupa los enlaces en secciones "## …".' },
   'llms-ok': { area: 'geo', titulo: 'llms.txt presente y bien formado', porque: '', arreglo: '' },
+  'llms-full-ok': { area: 'geo', titulo: 'llms-full.txt presente (contenido completo en Markdown)', porque: '', arreglo: '' },
+  'markdown-negociacion': { area: 'geo', titulo: 'La web sirve Markdown a quien lo pide (Accept: text/markdown)', porque: '', arreglo: '' },
   'fuentes-externas-faltan': { area: 'geo', titulo: 'Contenido extenso sin fuentes externas',
     porque: 'Los motores generativos priorizan contenido verificable. En experimentos académicos (Aggarwal et al., «GEO», 2023) citar fuentes fue de las tácticas que más mejoró la visibilidad en respuestas generadas.',
     arreglo: 'Enlaza a fuentes primarias (normativa, estudios, datos oficiales) cuando afirmes algo que se pueda comprobar.' },

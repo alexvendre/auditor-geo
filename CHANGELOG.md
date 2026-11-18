@@ -1,5 +1,18 @@
 # Cambios
 
+## 3.1.0 — 2026-11-18
+
+- **Comparar con una auditoría anterior** (`--comparar informe.json`): resuelto, nuevo, mejora y
+  empeora, con aviso si las reglas o el alcance no son los mismos.
+- **Generadores** (`generar llms|robots|schema`): borradores de llms.txt desde el sitemap, bloque
+  de robots.txt para rastreadores de IA y JSON-LD de la entidad con huecos marcados.
+- **Servidor MCP** (`bin/mcp.js`) sin dependencias, para usar el auditor desde Claude u otros
+  asistentes.
+- Nuevas comprobaciones informativas: `llms-full.txt` y versión Markdown por negociación de
+  contenido (`Accept: text/markdown`).
+- Calibración: el marcado global (`https://dominio/#…`) y lo que cuelga de él se valida solo en la
+  portada.
+
 ## 3.0.0 — 2026-11-18
 
 - **Auditoría completa** (`auditor-geo completa --proyecto proyecto.json`): web, marca, visibilidad

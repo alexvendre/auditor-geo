@@ -1,11 +1,12 @@
 {
   "name": "auditor-geo",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Auditoría SEO, GEO y AEO de webs y marcas, de código abierto: rastreo, indexación, datos estructurados, rastreadores de IA, respuestas directas, entidad, visibilidad en asistentes de IA y estudio del SSI de LinkedIn. Sin dependencias obligatorias.",
   "license": "MIT",
   "author": "Alex Vendrell Torres (https://alexvendrell.com)",
   "bin": {
-    "auditor-geo": "bin/auditor.js"
+    "auditor-geo": "bin/auditor.js",
+    "auditor-geo-mcp": "bin/mcp.js"
   },
   "main": "src/auditoria.js",
   "engines": {

@@ -13,6 +13,7 @@ const { terminal } = require('../src/report/terminal');
 const { html } = require('../src/report/html');
 const { markdown } = require('../src/report/markdown');
 const { parsearSSI } = require('../src/linkedin');
+const { comparar, cargarAnterior } = require('../src/comparar');
 
 const AYUDA = `
 auditor-geo — Auditoría SEO, GEO y AEO de webs y marcas
@@ -22,6 +23,7 @@ Uso
   auditor-geo completa --proyecto proyecto.json   Todo lo que defina el proyecto en un único informe
   auditor-geo linkedin --ssi 18,12,15,20 [...]    Estudio de LinkedIn (SSI, perfil y actividad)
   auditor-geo ia --marca "Nombre" [...]           Visibilidad en ChatGPT, Claude, Perplexity y Gemini
+  auditor-geo generar <llms|robots|schema> <url>  Borrador del arreglo (llms.txt, bloque de robots.txt, JSON-LD)
 
 Web
   --sitio                Audita el sitio entero (sitemap + enlaces internos)
@@ -54,6 +56,7 @@ LinkedIn
 Informe
   --html [archivo]  --md [archivo]  --json [archivo]   (JSON a la salida estándar si no se indica archivo)
   --autor "<nombre>"  --empresa "<texto>"   Firma y antetítulo del informe HTML
+  --comparar <json>  Compara con una auditoría anterior (su --json): resuelto, nuevo, mejor y peor
   --detalle          Todos los casos en la terminal      --sin-color
   --falla-en <nivel> critico | alto | medio | bajo | nunca (por defecto: alto)
 
@@ -68,7 +71,7 @@ function leerArgs(argv) {
   const op = { _: [] };
   const conValor = new Set(['max', 'concurrencia', 'config', 'autor', 'empresa', 'falla-en', 'proyecto', 'marca', 'alias', 'perfiles', 'linkedin-url',
     'consultas', 'categoria', 'zona', 'competidores', 'proveedores', 'repeticiones', 'historial-ia', 'dominio', 'pais',
-    'ssi', 'linkedin-export', 'linkedin-checklist', 'historial-ssi']);
+    'ssi', 'linkedin-export', 'linkedin-checklist', 'historial-ssi', 'comparar', 'salida', 'tipo']);
   const valorOpcional = { html: /\.html?$/i, md: /\.(md|markdown)$/i, json: /\.json$/i };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -131,9 +134,28 @@ function proyectoDesdeArchivo(ruta) {
   return p;
 }
 
+async function generar(op) {
+  const G = require('../src/generar');
+  const [que, url] = op._;
+  if (!['llms', 'robots', 'schema'].includes(que) || !url) {
+    console.error('Uso: auditor-geo generar <llms|robots|schema> <url> [--tipo persona|organizacion|negocio] [--salida archivo]');
+    process.exit(1);
+  }
+  try {
+    const r = que === 'llms' ? await G.generarLlms(url, { max: op.max ? Number(op.max) : 80 })
+      : que === 'robots' ? await G.generarRobots(url)
+        : await G.generarSchema(url, op.tipo || 'organizacion');
+    if (op.salida) { fs.writeFileSync(op.salida, r.texto + '\n'); console.error(`Borrador guardado en ${path.resolve(op.salida)}`); }
+    else console.log(r.texto);
+    const nota = que === 'llms' ? `${r.paginas} páginas incluidas de ${r.sitemap} en el sitemap.` : que === 'robots' ? r.aviso : `${r.huecos} campos marcados con [COMPLETAR].`;
+    console.error(`\nBorrador: revísalo antes de publicarlo. ${nota}`);
+  } catch (e) { console.error(`Error: ${e.message}`); process.exit(2); }
+}
+
 (async () => {
   const op = leerArgs(process.argv.slice(2));
-  const sub = ['completa', 'linkedin', 'ia'].includes(op._[0]) ? op._.shift() : 'web';
+  const sub = ['completa', 'linkedin', 'ia', 'generar'].includes(op._[0]) ? op._.shift() : 'web';
+  if (sub === 'generar') return generar(op);
   if (op.help || op.ayuda || (sub === 'web' && !op._.length) || (sub === 'completa' && !op.proyecto)) {
     console.log(AYUDA);
     process.exit(op.help || op.ayuda ? 0 : 1);
@@ -162,6 +184,11 @@ function proyectoDesdeArchivo(ruta) {
   if (verProgreso) process.stderr.write('\r\x1b[2K');
 
   const inf = construir(resultado);
+  const anterior = op.comparar || (proyecto.informe && proyecto.informe.comparar);
+  if (anterior) {
+    try { inf.comparacion = comparar(inf, cargarAnterior(anterior)); }
+    catch (e) { console.error(`No se pudo comparar con ${anterior}: ${e.message}`); }
+  }
   const nombre = String(inf.meta.titulo || 'auditoria').replace(/^www\./, '').replace(/[^\w.-]+/g, '-').toLowerCase();
   const dia = inf.meta.fecha.slice(0, 10);
   const guardar = (valor, ext, contenido) => {
@@ -175,7 +202,7 @@ function proyectoDesdeArchivo(ruta) {
   if (op.autor) cfgInforme.autor = op.autor;
   if (op.empresa) cfgInforme.empresa = op.empresa;
 
-  const salida = { meta: inf.meta, resumen: inf.resumen, grupos: inf.grupos, paginas: inf.paginas, sitio: inf.sitio, marca: inf.marca, ia: inf.ia, linkedin: inf.linkedin, avisos: inf.avisos };
+  const salida = { meta: inf.meta, resumen: inf.resumen, grupos: inf.grupos, paginas: inf.paginas, sitio: inf.sitio, marca: inf.marca, ia: inf.ia, linkedin: inf.linkedin, comparacion: inf.comparacion, avisos: inf.avisos };
   if (jsonStdout) console.log(JSON.stringify(salida, null, 2));
   else {
     console.log(terminal(inf, { color, detalle: !!op.detalle }));

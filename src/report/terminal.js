@@ -88,6 +88,17 @@ function alcance(m) {
 const barra = (v, max, ancho = 20) => '█'.repeat(Math.round(v / max * ancho)).padEnd(ancho, '·');
 
 function modulos(inf, L, c) {
+  const cmp = inf.comparacion;
+  if (cmp) {
+    L.push('');
+    L.push(`${c.neg}Evolución desde ${cmp.fechaAnterior ? new Date(cmp.fechaAnterior).toLocaleDateString('es-ES') : 'la auditoría anterior'}${c.off}  ${c.dim}casos a revisar: ${cmp.casosAntes} → ${cmp.casosAhora}${c.off}`);
+    cmp.resueltos.forEach(x => L.push(`  ${c.ok}✓ Resuelto${c.off}  ${x.titulo} ${c.dim}(${x.antes})${c.off}`));
+    cmp.mejoran.forEach(x => L.push(`  ${c.ok}↓ Mejora${c.off}    ${x.titulo} ${c.dim}${x.antes} → ${x.ahora}${c.off}`));
+    cmp.empeoran.forEach(x => L.push(`  ${c.alto}↑ Empeora${c.off}   ${x.titulo} ${c.dim}${x.antes} → ${x.ahora}${c.off}`));
+    cmp.nuevos.forEach(x => L.push(`  ${c.alto}+ Nuevo${c.off}     ${x.titulo} ${c.dim}(${x.ahora})${c.off}`));
+    if (!cmp.resueltos.length && !cmp.mejoran.length && !cmp.empeoran.length && !cmp.nuevos.length) L.push(`  ${c.dim}Sin cambios.${c.off}`);
+    (cmp.avisos || []).forEach(a => L.push(`  ${c.medio}Ojo:${c.off} ${a}`));
+  }
   const li = inf.linkedin;
   if (li && li.ssi) {
     const s = li.ssi;

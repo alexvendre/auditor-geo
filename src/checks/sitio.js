@@ -111,6 +111,16 @@ async function llms(origen, h) {
   return { enlaces };
 }
 
+/** Convenciones emergentes para agentes: solo se informa cuando existen, su ausencia no es un fallo. */
+async function versionesParaAgentes(origen, h) {
+  const full = await pedir(origen + '/llms-full.txt', { ua: UA_NAVEGADOR });
+  if (full.status === 200 && !/<html|<!doctype/i.test(full.body.slice(0, 300)) && full.body.length > 200) {
+    h('llms-full-ok', 'ok', `${Math.round(full.body.length / 1024)} KB`);
+  }
+  const md = await pedir(origen + '/', { ua: UA_NAVEGADOR, cabeceras: { Accept: 'text/markdown, text/plain;q=0.9' }, usarCache: false });
+  if (/markdown/i.test(md.contentType || '')) h('markdown-negociacion', 'ok', `Content-Type: ${md.contentType}`);
+}
+
 /** Localiza y lee los sitemaps (índices incluidos). Devuelve [{loc, lastmod}] */
 async function sitemaps(origen, declarados, h) {
   const candidatos = [...new Set([...declarados, origen + '/sitemap.xml', origen + '/sitemap_index.xml', origen + '/wp-sitemap.xml'])];
@@ -211,4 +221,4 @@ async function pageSpeed(url, h) {
   return out;
 }
 
-module.exports = { robots, politicaIA, accesoBots, llms, sitemaps, consolidacion, soft404, pageSpeed };
+module.exports = { robots, politicaIA, accesoBots, llms, versionesParaAgentes, sitemaps, consolidacion, soft404, pageSpeed };

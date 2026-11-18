@@ -86,6 +86,7 @@ async function auditar(urlEntrada, op = {}) {
   if (op.bots !== false) { progreso('Probando el acceso real de los bots de IA'); acceso = await S.accesoBots(portada.finalUrl, politica, hs); }
   progreso('llms.txt, versiones del dominio y páginas de error');
   const llms = await S.llms(origen, hs);
+  await S.versionesParaAgentes(origen, hs);
   await S.consolidacion(portada.finalUrl, hs);
   await S.soft404(origen, hs);
   if (base.protocol === 'https:' && !portada.headers.get('strict-transport-security')) hs('sin-hsts', 'bajo');

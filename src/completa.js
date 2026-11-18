@@ -31,6 +31,11 @@ async function auditoriaCompleta(p, progreso = () => {}) {
     hallazgos: [], paginas: [], sitio: {}, avisos: []
   };
   resultado.meta.modulos = { web: !!base };
+  // Huella de la configuración: dos auditorías solo son comparables con las mismas reglas y alcance
+  if (p.web) {
+    const reglas = JSON.stringify(p.web.reglas || p.web.cfg || {}, (k, v) => v instanceof RegExp ? v.source : v);
+    resultado.meta.huella = require('crypto').createHash('sha1').update(reglas + '|' + !!p.web.sitio).digest('hex').slice(0, 10);
+  }
 
   // Marca y entidad: necesita la portada
   if (base && p.marca !== false) {

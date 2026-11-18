@@ -7,7 +7,7 @@ function markdown(inf) {
   const ruta = (u) => { try { const x = new URL(u); return x.origin === m.origen ? (decodeURI(x.pathname) + x.search) : u; } catch { return u; } };
   const s = inf.resumen.porSev;
   const L = [];
-  L.push(`# ${titulo(m)} · ${m.titulo || m.url}`, '');
+  L.push(`# ${titulo(m)}${m.titulo && m.titulo !== 'LinkedIn' ? ` · ${m.titulo}` : ''}`, '');
   L.push(`${new Date(m.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} · ${alcance(m)}`, '');
   L.push('## Resumen', '');
   L.push(`| Críticos | Altos | Medios | Bajos | Correctos |`, `|---|---|---|---|---|`, `| ${s.critico} | ${s.alto} | ${s.medio} | ${s.bajo} | ${s.ok} |`, '');
@@ -15,6 +15,15 @@ function markdown(inf) {
   L.push('| Área | Estado | A revisar |', '|---|---|---|');
   inf.resumen.areas.forEach(a => L.push(`| ${a.nombre} | ${est[a.estado]} | ${a.problemas} |`));
   L.push('');
+  if (inf.comparacion) {
+    const x = inf.comparacion;
+    L.push('## Evolución', '', `Casos a revisar: ${x.casosAntes} → ${x.casosAhora}`, '');
+    x.resueltos.forEach(r => L.push(`- ✓ Resuelto: ${r.titulo} (${r.antes} → 0)`));
+    x.mejoran.forEach(r => L.push(`- Mejora: ${r.titulo} (${r.antes} → ${r.ahora})`));
+    x.empeoran.forEach(r => L.push(`- Empeora: ${r.titulo} (${r.antes} → ${r.ahora})`));
+    x.nuevos.forEach(r => L.push(`- Nuevo: ${r.titulo} (${r.ahora})`));
+    L.push('');
+  }
   if (inf.linkedin && inf.linkedin.ssi) {
     const x = inf.linkedin.ssi;
     L.push('## LinkedIn · Social Selling Index', '', `**${x.total}/100**${x.sector != null ? ` · top ${x.sector} % de tu sector` : ''}${x.red != null ? ` · top ${x.red} % de tu red` : ''}`, '', '| Pilar | Puntuación | Estado |', '|---|---|---|');

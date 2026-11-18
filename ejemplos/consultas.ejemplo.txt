@@ -1,0 +1,6 @@
+# Una consulta por línea. Usa las preguntas reales de tus clientes, no las que te gustaría que hicieran.
+# Las líneas que empiezan por # se ignoran.
+¿Quién es [tu marca]?
+Recomiéndame [tu servicio] en [tu zona]
+¿Cuánto cuesta [tu servicio] para una empresa pequeña?
+¿Qué diferencia hay entre [opción A] y [opción B]?

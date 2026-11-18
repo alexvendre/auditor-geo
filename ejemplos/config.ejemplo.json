@@ -1,0 +1,19 @@
+{
+  "_comentario": "Reglas propias de un sitio. Todas las claves son opcionales. Uso: auditor-geo https://dominio.com --sitio --config ejemplos/config.ejemplo.json",
+
+  "terminosProhibidos": ["expresión regular del mensaje antiguo", "otro término abandonado"],
+  "listaBlancaTerminos": ["/ruta-donde-ese-termino-sigue-siendo-correcto/"],
+
+  "coherencia": {
+    "teléfono de contacto": "(\\+34\\s?\\d{3}\\s?\\d{3}\\s?\\d{3})",
+    "precio de la auditoría": "[Aa]uditor[ií]a[^.]{0,40}?(desde \\d+\\s?€)"
+  },
+
+  "minPalabras": 300,
+  "exentasDeLongitud": ["/gracias/", "/contacto/"],
+  "huerfanasAdrede": ["/gracias/"],
+  "imagenesEager": 3,
+  "imagenesIgnoradas": ["pixel\\.wp\\.com", "\\bb\\.gif"],
+  "maxKBInmediato": 500,
+  "seguirParametros": false
+}

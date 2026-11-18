@@ -1,2 +1,7 @@
 *.bak
 node_modules/
+informe-*.html
+informe-*.md
+informe-*.json
+historial/
+informes/

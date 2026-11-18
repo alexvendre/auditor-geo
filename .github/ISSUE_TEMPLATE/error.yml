@@ -1,0 +1,27 @@
+name: Error
+description: El auditor falla o da un resultado incorrecto
+labels: [error]
+body:
+  - type: input
+    id: comando
+    attributes:
+      label: Comando ejecutado
+      placeholder: node bin/auditor.js https://ejemplo.com --sitio
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Qué esperabas y qué ha pasado
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión de Node y sistema operativo
+      placeholder: Node 22, macOS 15
+  - type: textarea
+    id: salida
+    attributes:
+      label: Salida (puedes ejecutar con DEBUG=1)
+      render: text

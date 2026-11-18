@@ -1,0 +1,46 @@
+{
+  "_comentario": "Auditoría completa. Ejecuta: auditor-geo completa --proyecto ejemplos/proyecto.ejemplo.json. Todas las secciones son opcionales y las rutas son relativas a este archivo.",
+
+  "web": {
+    "url": "https://tudominio.com",
+    "sitio": true,
+    "max": 200,
+    "render": false,
+    "psi": false,
+    "reglas": "config.ejemplo.json"
+  },
+
+  "marca": {
+    "nombre": "Nombre exacto de la marca o de la persona",
+    "alias": ["Otra forma de escribirla"],
+    "perfiles": ["https://www.linkedin.com/in/tu-perfil/", "https://github.com/tu-usuario"],
+    "linkedin": "https://www.linkedin.com/in/tu-perfil/",
+    "wikidata": true
+  },
+
+  "ia": {
+    "activar": false,
+    "_aviso": "Consulta las API con tus claves (OPENAI_API_KEY, ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, GEMINI_API_KEY) y tiene coste. Ponlo a true cuando quieras medir.",
+    "consultas": "consultas.ejemplo.txt",
+    "competidores": ["Competidor A", "Competidor B"],
+    "proveedores": [],
+    "repeticiones": 1,
+    "pais": "ES",
+    "historial": "../historial/ia.jsonl"
+  },
+
+  "linkedin": {
+    "ssi": { "marca": 18.5, "personas": 12, "interaccion": 15, "relaciones": 20, "sector": 8, "red": 12 },
+    "exportacion": null,
+    "checklist": "linkedin-checklist.json",
+    "historial": "../historial/ssi.jsonl",
+    "perfil": "https://www.linkedin.com/in/tu-perfil/"
+  },
+
+  "informe": {
+    "html": "../informes/auditoria.html",
+    "json": "../informes/auditoria.json",
+    "autor": "Tu nombre",
+    "empresa": "Tu marca"
+  }
+}

@@ -127,6 +127,7 @@ function modulos(inf, L, c) {
     L.push('');
     L.push(`${c.neg}Rastreo real · registros del servidor${c.off}  ${c.dim}${rg.validas} peticiones${rg.dias ? ` en ${rg.dias} días` : ''}${rg.verificado ? ' · IP verificadas' : ''}${c.off}`);
     if (!rg.bots.length) L.push(`  ${c.dim}Ningún rastreador conocido en el periodo.${c.off}`);
+    if (rg.otros && rg.otros.length) L.push(`  ${c.dim}Otros bots: ${rg.otros.map(o => `${o.nombre} (${o.visitas})`).join(', ')}${c.off}`);
     rg.bots.forEach(b => {
       const err = (b.estados['4xx'] || 0) + (b.estados['5xx'] || 0);
       const ver = b.verificadas != null ? `  ${c.dim}${b.verificadas} verificadas · ${b.falsas} falsas${c.off}` : '';

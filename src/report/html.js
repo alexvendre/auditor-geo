@@ -242,7 +242,8 @@ ${x.pilares.map(p => `<div class="pilar"><span>${esc(p.nombre)}</span><span clas
 <p class="dim">${rg.validas} peticiones analizadas${rg.dias ? ` en ${rg.dias} días (${esc(rg.desde.slice(0, 10))} a ${esc(rg.hasta.slice(0, 10))})` : ''}${rg.verificado ? '. Las IP se han contrastado con los rangos publicados por cada empresa o por DNS inverso' : rg.conIP ? '. IP sin verificar (usa --verificar-ip)' : '. El registro no incluye IP, así que no se puede comprobar que cada visita sea del bot real'}. Las IP no se muestran.</p>
 ${rg.bots.length ? `<div class="tabla"><table><thead><tr><th>Agente</th><th>Visitas</th><th>Páginas</th><th>Errores</th>${rg.verificado ? '<th>Verificadas / falsas</th>' : ''}<th>Más visitadas</th><th>Última</th></tr></thead><tbody>
 ${rg.bots.map(b => { const err = (b.estados['4xx'] || 0) + (b.estados['5xx'] || 0); return `<tr><td><strong>${esc(b.token)}</strong><br><span class="dim">${esc(tipoTxt[b.tipo] || b.tipo)}</span></td><td>${b.visitas}</td><td>${b.paginas}</td><td class="${err ? 'no' : ''}">${err}</td>${rg.verificado ? `<td>${b.verificadas ?? '—'} / ${b.falsas ?? '—'}</td>` : ''}<td class="dim">${esc(b.top.map(t => `${t.ruta} (${t.n})`).join(', '))}</td><td>${esc((b.ultima || '').slice(0, 10))}</td></tr>`; }).join('')}
-</tbody></table></div>` : '<p>Ningún rastreador conocido en el periodo.</p>'}</section>`);
+</tbody></table></div>` : '<p>Ningún rastreador conocido en el periodo.</p>'}
+${rg.otros && rg.otros.length ? `<p class="dim">Otros bots en el registro (herramientas SEO, monitores, scrapers): ${esc(rg.otros.map(o => `${o.nombre} (${o.visitas})`).join(', '))}.</p>` : ''}</section>`);
   }
   const ia = inf.ia;
   if (ia && ia.registros && ia.registros.length) {

@@ -129,6 +129,7 @@ async function analizarLogs(archivos, op = {}) {
   const h = (id, severidad, detalle = '') => hallazgos.push({ id, severidad, detalle, url: 'Registros del servidor' });
   const porBot = new Map();
   let lineas = 0, validas = 0, desde = null, hasta = null, conIP = 0;
+  const otros = new Map();
 
   for (const a of archivos) {
     for (const linea of leerArchivo(a)) {
@@ -140,7 +141,11 @@ async function analizarLogs(archivos, op = {}) {
       if (r.ip) conIP++;
       if (r.fecha) { if (!desde || r.fecha < desde) desde = r.fecha; if (!hasta || r.fecha > hasta) hasta = r.fecha; }
       const ag = agenteDe(r.ua);
-      if (!ag) continue;
+      if (!ag) {
+        const m = /([A-Za-z][\w.-]*(?:bot|crawler|spider|scraper|fetcher))[\/ ;]/i.exec(r.ua + ' ');
+        if (m) otros.set(m[1], (otros.get(m[1]) || 0) + 1);
+        continue;
+      }
       if (!porBot.has(ag.token)) porBot.set(ag.token, { ...ag, visitas: 0, rutas: new Map(), estados: { '2xx': 0, '3xx': 0, '4xx': 0, '5xx': 0 }, codigos: {}, ips: new Map(), primera: null, ultima: null });
       const b = porBot.get(ag.token);
       b.visitas++;
@@ -198,13 +203,16 @@ async function analizarLogs(archivos, op = {}) {
     const visitadas = new Set();
     bots.filter(b => ['busqueda', 'usuario', 'buscador'].includes(b.tipo)).forEach(b => b.rutas.forEach((_, r) => visitadas.add(r.replace(/\/+$/, '') || '/')));
     const sinVisitar = op.sitemap.map(u => { try { return new URL(u).pathname.replace(/\/+$/, '') || '/'; } catch { return null; } }).filter(r => r && !visitadas.has(r));
-    if (sinVisitar.length) h('logs-paginas-sin-visitar', sinVisitar.length / op.sitemap.length > 0.5 ? 'medio' : 'bajo', `${sinVisitar.length} de ${op.sitemap.length} URLs del sitemap sin ninguna visita de bots de búsqueda en el periodo: ${sinVisitar.slice(0, 6).join(', ')}${sinVisitar.length > 6 ? '…' : ''}`);
+    // Con menos de una semana de registros, que una página no tenga visitas no dice nada:
+    // los bots no pasan por todas las páginas cada día. Se informa, pero no se marca como problema.
+    const corta = !dias || dias < 7;
+    if (sinVisitar.length) h('logs-paginas-sin-visitar', corta ? 'info' : sinVisitar.length / op.sitemap.length > 0.5 ? 'medio' : 'bajo', `${sinVisitar.length} de ${op.sitemap.length} URLs del sitemap sin ninguna visita de bots de búsqueda en ${dias || '<1'} día(s)${corta ? ' (muestra demasiado corta para sacar conclusiones: usa al menos 7 días)' : ''}: ${sinVisitar.slice(0, 6).join(', ')}${sinVisitar.length > 6 ? '…' : ''}`);
     else h('logs-sitemap-cubierto', 'ok', `Las ${op.sitemap.length} URLs del sitemap han recibido visitas de bots de búsqueda`);
   }
   if (!busquedaIA.length && bots.some(b => b.tipo === 'entrenamiento')) h('logs-solo-entrenamiento', 'info', 'Solo llegan bots de entrenamiento; ninguno de búsqueda ni de petición de usuario.');
 
   bots.forEach(b => delete b.rutas);
-  return { hallazgos, datos: { archivos: archivos.length, lineas, validas, desde: desde && desde.toISOString(), hasta: hasta && hasta.toISOString(), dias, bots, verificado: !!op.verificar && conIP > 0, conIP: conIP > 0 } };
+  return { hallazgos, datos: { archivos: archivos.length, lineas, validas, desde: desde && desde.toISOString(), hasta: hasta && hasta.toISOString(), dias, bots, otros: [...otros.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([nombre, visitas]) => ({ nombre, visitas })), verificado: !!op.verificar && conIP > 0, conIP: conIP > 0 } };
 }
 
 module.exports = { analizarLogs, parsearLinea, agenteDe, enRango, AGENTES };

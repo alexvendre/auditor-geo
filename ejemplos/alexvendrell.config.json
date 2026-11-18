@@ -1,0 +1,24 @@
+{
+  "_comentario": "Reglas de alexvendrell.com, migradas desde el objeto CFG de auditor-web.js v1.",
+
+  "terminosProhibidos": [
+    "consultor de automatizaci",
+    "consultor de implantación de IA",
+    "especialista en automatizaci",
+    "Especialista en IA aplicada"
+  ],
+  "listaBlancaTerminos": [
+    "/automatizacion-procesos-", "/agentes-ia-", "/implantacion-hubspot-crm",
+    "/guia-n8n-pymes", "/ia-", "/tareas-", "/preguntas-frecuentes-ia-empresas",
+    "/glosario-automatizacion"
+  ],
+  "coherencia": {
+    "lista de rastreadores de IA": "GPTBot((?:,\\s*[A-Z][\\w-]+)+(?:\\s+[oy]\\s+[A-Z][\\w-]+)?)"
+  },
+  "minPalabras": 250,
+  "exentasDeLongitud": ["/politica-de-privacidad/", "/politica-de-cookies/", "/aviso-legal/", "/muchas-gracias/"],
+  "huerfanasAdrede": ["/muchas-gracias/"],
+  "imagenesEager": 3,
+  "imagenesIgnoradas": ["\\bb\\.gif", "pixel\\.wp\\.com", "/i/scripts/"],
+  "maxKBInmediato": 300
+}

@@ -1,0 +1,23 @@
+{
+  "name": "auditor-geo",
+  "version": "2.0.0",
+  "description": "Auditoría SEO, GEO y AEO de páginas y sitios completos: rastreo, indexación, datos estructurados, rastreadores de IA, respuestas directas y entidad. Sin dependencias.",
+  "license": "MIT",
+  "author": "Alex Vendrell Torres (https://alexvendrell.com)",
+  "bin": {
+    "auditor-geo": "bin/auditor.js"
+  },
+  "main": "src/auditoria.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test",
+    "auditar": "node bin/auditor.js"
+  },
+  "keywords": ["seo", "geo", "aeo", "auditoria", "llms.txt", "robots.txt", "schema.org", "ai-crawlers"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexvendre/auditor-geo.git"
+  }
+}

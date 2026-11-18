@@ -1,245 +1,297 @@
 # auditor-geo
 
-Auditoría **SEO, GEO y AEO** de una página o de un sitio entero, desde la terminal. Comprueba si
-una web puede ser **rastreada, indexada, entendida y citada** por Google, Bing y los asistentes de IA
-(ChatGPT, Claude, Perplexity, Gemini, Copilot), y entrega un informe priorizado que se puede pasar
-tal cual a un cliente.
+**Auditoría SEO, GEO y AEO de código abierto para webs, marcas y marcas personales.**
 
-Sin instalación y sin dependencias: solo Node 18 o superior.
+Comprueba si una web puede ser **rastreada, indexada, entendida y citada** por Google, Bing y los
+asistentes de IA (ChatGPT, Claude, Perplexity, Gemini, Copilot); si la **marca** está bien definida
+como entidad y conectada con sus perfiles; si los asistentes **la mencionan** cuando un cliente
+pregunta; y cómo está su **LinkedIn** (Social Selling Index, perfil y actividad). Todo en un único
+informe priorizado que se puede entregar tal cual.
 
 ```bash
-node bin/auditor.js https://dominio.com                      # una página
-node bin/auditor.js https://dominio.com --sitio              # el sitio entero
-node bin/auditor.js https://dominio.com --sitio --html       # + informe HTML para el cliente
+git clone https://github.com/alexvendre/auditor-geo.git && cd auditor-geo
+node bin/auditor.js https://tudominio.com --sitio --html
 ```
 
----
+Node 18 o superior. **Sin dependencias obligatorias.** Licencia MIT.
 
-## Por qué existe
-
-Las auditorías automáticas tienen dos problemas: **dan falsos positivos** y **miran donde no está el
-fallo**.
-
-**Falsos positivos.** Muchas herramientas comprueban si bloqueas a los bots de IA lanzando una
-petición con el *user-agent* de GPTBot. Si reciben un `403`, concluyen que hay bloqueo. Casi siempre
-es falso: el alojamiento verifica la IP de origen y rechaza a quien dice ser un bot desde una IP que no
-le corresponde. Este auditor hace la comprobación de control que las demás no hacen: **prueba lo mismo
-con Googlebot**. Si Googlebot también recibe 403, no hay bloqueo de IA, hay una protección funcionando.
-
-**El fallo no vive en el contenido.** El H1 sale del título de la entrada, la meta description del
-extracto, el `alt` de la biblioteca de medios y la imagen social de la imagen destacada. Puedes releer
-un artículo diez veces y no ver ninguno de esos fallos. Por eso se audita la **página tal como la
-entrega el servidor**, que es donde todo confluye y lo que leen los rastreadores de IA, que en su
-mayoría no ejecutan JavaScript.
-
-Y una regla de diseño que atraviesa toda la herramienta: **una regla mal calibrada es peor que no
-tenerla**. Un informe con ruido se deja de leer. Cada comprobación tiene un caso de prueba que
-*debería pasar limpio*, y se ha calibrado contra webs reales (ver [Calibración](#calibración)).
+> *English summary at the end.*
 
 ---
 
-## Qué comprueba
+## Qué audita
 
-Más de 100 comprobaciones en 11 áreas. Cada hallazgo del informe explica **por qué importa** y
-**cómo se arregla**.
+| Módulo | Qué responde | Cómo |
+|---|---|---|
+| **Web: SEO, GEO y AEO** | ¿Pueden buscadores y asistentes leer, entender y citar la web? | Más de 100 comprobaciones sobre el HTML que entrega el servidor, una página o el sitio entero |
+| **Marca y entidad** | ¿Está claro quién es la marca y lo confirman otras fuentes? | Nombre, ficha de la entidad, perfiles externos, Wikidata y Knowledge Graph |
+| **Visibilidad en IA** | ¿Te mencionan los asistentes cuando un cliente pregunta? | Consultas reales a sus API con búsqueda web, con historial para comparar entre meses |
+| **LinkedIn** | ¿Qué falla en tu SSI y en tu perfil, y qué hacer? | SSI, exportación oficial de datos de la cuenta y lista de comprobación |
 
-### GEO · Visibilidad en IA generativa
-- **robots.txt para 18 agentes de IA**, interpretado según el RFC 9309 (grupos, regla más larga,
-  comodines), y clasificados por uso: **búsqueda** (OAI-SearchBot, Claude-SearchBot, PerplexityBot,
-  Bingbot…), **petición de usuario** (ChatGPT-User, Claude-User, Perplexity-User…) y **entrenamiento**
-  (GPTBot, ClaudeBot, CCBot, Google-Extended…). Bloquear el entrenamiento es una decisión legítima;
-  bloquear la búsqueda es renunciar a que te citen. El informe no los mezcla.
-- **Acceso real** de cada bot contrastado con Googlebot y con un navegador: distingue bloqueo real,
-  verificación de IP (falso positivo) y **Cloudflare AI Crawl Control**, que bloquea la IA por defecto
-  en dominios nuevos desde 2025.
-- **`Content-Signal`** de Cloudflare en robots.txt (search, ai-input, ai-train).
-- **Contenido que depende de JavaScript**: aplicaciones que llegan vacías al rastreador. Con
-  `--render`, compara el HTML del servidor con la página renderizada y dice qué porcentaje del texto
-  solo existe tras ejecutar JavaScript.
-- **llms.txt**: presencia y formato (marcado como informativo: es una propuesta, no un estándar).
-- Fuentes externas, datos concretos, fecha de actualización y autoría en artículos; secciones largas
-  sin subtítulos (los modelos recuperan fragmentos, no páginas).
+### 1. Web: SEO, GEO y AEO
 
-### AEO · Respuestas directas
-- `nosnippet`, `max-snippet` y `data-nosnippet`, que excluyen la página de fragmentos destacados y AI
-  Overviews.
-- Si el primer párrafo **responde** (solo en páginas informativas: exigirlo en una portada daba falsos
-  avisos).
-- Subtítulos en forma de pregunta y longitud del párrafo que los responde.
-- Preguntas del marcado `FAQPage` que **no se ven** en la página (incumple las directrices de Google).
+- **GEO.** robots.txt según el RFC 9309 para 18 agentes de IA, separados por uso: **búsqueda**
+  (OAI-SearchBot, Claude-SearchBot, PerplexityBot, Bingbot…), **petición de usuario** (ChatGPT-User,
+  Claude-User…) y **entrenamiento** (GPTBot, ClaudeBot, CCBot, Google-Extended…). Bloquear el
+  entrenamiento es una decisión legítima; bloquear la búsqueda es renunciar a que te citen.
+  - **Acceso real** de cada bot contrastado con Googlebot, para no confundir la verificación de IP
+    del alojamiento con un bloqueo. Detecta **Cloudflare AI Crawl Control** y `Content-Signal`.
+  - **Contenido que depende de JavaScript**, invisible para la mayoría de rastreadores de IA. Con
+    `--render`, compara el HTML del servidor con la página renderizada.
+  - llms.txt, fuentes externas, datos concretos, fechas, autoría y secciones demasiado largas.
+- **AEO.** `nosnippet` y `max-snippet`, respuesta directa en el primer párrafo, preguntas como
+  subtítulo con respuestas breves y preguntas de `FAQPage` que no se ven en la página.
+- **SEO técnico y on-page.** Indexación, canonical, redirecciones, soft 404, http/https y www,
+  sitemaps, title y meta (medidos sin el sufijo de marca), encabezados, Open Graph, `alt`, enlaces,
+  hreflang, HTTPS y contenido mixto.
+- **Datos estructurados.** Validación por tipo con resolución de `@id` y detección de JSON-LD
+  «fugado» como texto visible.
+- **Sitio entero** (`--sitio`). Duplicados de title, meta, H1 y contenido, páginas huérfanas,
+  enlaces rotos, profundidad de clic, sitemap incoherente y datos que cada página dice de una forma.
+- **Rendimiento.** Tiempo de servidor, compresión, scripts que bloquean, imágenes sin dimensiones,
+  LCP con carga diferida y formatos (comprobando antes si el CDN ya sirve WebP o AVIF). Con
+  `--psi`, Core Web Vitals de usuarios reales.
 
-### Rastreo e indexación
-robots.txt (incluido el **5xx, que Google trata como bloqueo total**), sitemaps e índices de
-sitemaps, `noindex` en meta y en cabecera `X-Robots-Tag`, canonical (ausente, múltiple, a otra URL, a
-http), cadenas de redirecciones y redirecciones temporales, **soft 404**, consolidación http→https y
-www/sin www. En modo sitio: URLs del sitemap con error, redirección, `noindex` o canonical a otra
-página, y páginas indexables fuera del sitemap.
+### 2. Marca y entidad
 
-### Datos estructurados
-JSON-LD con errores de sintaxis, **JSON-LD fugado como texto visible** (el alojamiento quita la
-etiqueta `<script>` y deja el JSON a la vista), propiedades obligatorias y recomendadas por tipo
-(Organization, LocalBusiness y 40 subtipos, Person, Article, Product, Service, Event, FAQPage,
-BreadcrumbList, VideoObject, JobPosting…) resolviendo referencias `@id` en grafos, y avisos
-honestos sobre HowTo y FAQ, cuyos resultados enriquecidos Google retiró o limitó en 2023.
+Buscadores y modelos no posicionan páginas, reconocen **entidades**. Se comprueba:
 
-### Entidad y confianza (E-E-A-T)
-Ficha de la entidad en la portada (Organization, LocalBusiness o Person) con `sameAs`, coherencia del
-teléfono entre el marcado y la página (NAP), contacto visible, páginas de contacto y «sobre
-nosotros», aviso legal y privacidad (obligatorios en España por LSSI-CE y RGPD), autoría y
-**coherencia de la firma** entre artículos.
+- **Coherencia del nombre** entre el JSON-LD, `og:site_name`, el sufijo del title, el pie y llms.txt.
+- **Ficha de la entidad**:
+  - Person: cargo, foto, temas, empresa y perfiles.
+  - Organization o LocalBusiness: logo, contacto, dirección y descripción.
+- **Perfiles externos** (`sameAs` y los que indiques): si existen, si **enlazan de vuelta** a la web
+  y cuáles no se pueden verificar desde fuera (LinkedIn, Instagram, X y Facebook bloquean las
+  comprobaciones automáticas). Esos se marcan como «no verificables», no como errores.
+- **Wikidata** (`--wikidata`) y **Google Knowledge Graph** (con `KG_API_KEY`).
+- **Verificación manual** de lo que no se puede automatizar: resultados de Google, ficha de empresa,
+  reseñas y menciones.
 
-### SEO on-page, contenido y arquitectura
-Title (medido **sin el sufijo de marca**, que es lo primero que corta Google), meta description, H1,
-saltos de jerarquía, Open Graph, viewport, idioma, favicon, `alt` (sin contar `alt=""`, que es
-correcto en imágenes decorativas), nombres de archivo sin significado, textos de enlace genéricos,
-nofollow interno, texto provisional publicado y restos del editor. En modo sitio: **titles, metas, H1
-y contenido duplicados** (similitud por fragmentos, útil para detectar páginas locales clonadas),
-**huérfanas**, páginas enlazadas solo desde el menú, **enlaces internos rotos**, enlaces a
-redirecciones y profundidad de clic.
+### 3. Visibilidad en asistentes de IA
 
-### Rendimiento y seguridad
-Tiempo de respuesta del servidor, peso del HTML, compresión, scripts que bloquean el renderizado,
-imágenes sin dimensiones (CLS), **primera imagen con `loading="lazy"`** (empeora el LCP), imágenes
-sin carga diferida bajo el pliegue, formatos antiguos (comprobando antes si el CDN ya negocia WebP o
-AVIF, que si no da un falso aviso), HTTPS, contenido mixto y HSTS. Con `--psi`, **Core Web Vitals de
-usuarios reales** (LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1) y Lighthouse vía PageSpeed Insights.
+Hace a ChatGPT, Claude, Perplexity y Gemini (por API y con búsqueda web) las preguntas que haría un
+cliente. Para cada respuesta registra herramienta, modelo, fecha y consulta, y además:
 
-### Internacional
-Códigos `hreflang` válidos, autorreferencia y `x-default`.
+- si **menciona** la marca y si **enlaza** la web, y en qué posición;
+- qué **competidores** aparecen;
+- qué **fuentes** cita.
+
+Los resultados se acumulan en un historial JSONL para comparar mes a mes con las mismas consultas.
+
+- Usa **tus claves** y **tiene coste**. Solo se ejecuta con `--ia` o con `"activar": true` en el proyecto.
+- La API no es la aplicación de consumo y las respuestas varían entre ejecuciones. Es una muestra
+  con fecha, no una garantía de lo que verá cada usuario.
+
+| Asistente | Variable | Notas |
+|---|---|---|
+| ChatGPT | `OPENAI_API_KEY` | API Responses con `web_search`; modelo en `OPENAI_MODEL` |
+| Claude | `ANTHROPIC_API_KEY` | Requiere `npm install @anthropic-ai/sdk`; modelo en `CLAUDE_MODEL` |
+| Perplexity | `PERPLEXITY_API_KEY` | Sonar; modelo en `PERPLEXITY_MODEL` |
+| Gemini | `GEMINI_API_KEY` | Grounding con Google Search; modelo en `GEMINI_MODEL` |
+
+### 4. LinkedIn: SSI, perfil y actividad
+
+LinkedIn no permite leer el SSI ni los perfiles de forma automatizada (sus condiciones prohíben el
+scraping). Por eso el estudio usa datos que obtienes tú legítimamente:
+
+1. **SSI**: las cuatro puntuaciones de [linkedin.com/sales/ssi](https://www.linkedin.com/sales/ssi)
+   (0–25 cada una) y, si quieres, tu posición en tu sector y en tu red. El informe incluye:
+   - el estado de cada pilar;
+   - el **plan de acción** para los dos más bajos;
+   - la **evolución** si guardas el historial.
+2. **Exportación de datos** (Ajustes → Privacidad de datos → Obtener una copia de tus datos), en ZIP
+   o carpeta. Analiza:
+   - el titular, el extracto y la experiencia;
+   - las aptitudes y las recomendaciones;
+   - el crecimiento de la red;
+   - las publicaciones, los comentarios y las invitaciones personalizadas.
+
+   **Se procesa en local** y el informe solo muestra recuentos, nunca nombres, correos ni mensajes.
+3. **Lista de comprobación** ([`ejemplos/linkedin-checklist.json`](ejemplos/linkedin-checklist.json))
+   para lo que no está en la exportación: foto, banner, URL personalizada, destacados, servicios…
+
+> Las bandas «débil / mejorable / fuerte» son de esta herramienta: dividen la escala de 0 a 25 en
+> tramos. LinkedIn no publica referencias absolutas, solo tu posición relativa en tu sector y tu red.
 
 ---
 
 ## Uso
 
-```
-auditor-geo <url> [opciones]
-
-Alcance
-  --sitio              Audita el sitio entero: sitemap + enlaces internos
-  --max <n>            Máximo de páginas en modo sitio (por defecto 100)
-  --concurrencia <n>   Peticiones simultáneas (por defecto 4)
-
-Comprobaciones opcionales
-  --render             Compara el HTML del servidor con la página renderizada (requiere Playwright)
-  --psi                Core Web Vitals reales y Lighthouse (variable PSI_API_KEY recomendada)
-  --sin-bots           No simula rastreadores de IA contra el servidor
-  --config <archivo>   Reglas propias del sitio
-
-Salida
-  --html [archivo]     Informe HTML para entregar
-  --md [archivo]       Informe en Markdown
-  --json [archivo]     JSON completo (a la salida estándar si no se indica archivo)
-  --detalle            En la terminal, todos los casos de cada hallazgo
-  --autor "<nombre>"   Firma del informe HTML
-  --marca "<texto>"    Antetítulo del informe HTML
-  --falla-en <nivel>   Código de salida 1 si hay hallazgos de ese nivel o más graves
-                       (critico | alto | medio | bajo | nunca; por defecto alto)
-```
-
-Ejemplos:
-
 ```bash
-# Auditoría completa con informe para el cliente
-node bin/auditor.js https://cliente.es --sitio --max 300 --html --autor "Alex Vendrell Torres"
+# Web + marca de una página
+node bin/auditor.js https://tudominio.com
 
-# En un pipeline: falla solo si hay problemas críticos
-node bin/auditor.js https://cliente.es --sitio --json informe.json --falla-en critico
+# Sitio entero con informe para entregar
+node bin/auditor.js https://tudominio.com --sitio --max 300 --html --autor "Tu nombre"
 
-# Con Core Web Vitals y comparación con la página renderizada
-PSI_API_KEY=xxxx node bin/auditor.js https://cliente.es --psi --render
+# Estudio de LinkedIn
+node bin/auditor.js linkedin --ssi 18.5,12,15,20,8,12 \
+  --linkedin-export Basic_LinkedInDataExport.zip \
+  --linkedin-checklist mi-checklist.json --historial-ssi historial/ssi.jsonl --html
+
+# Visibilidad en IA
+node bin/auditor.js ia --marca "Tu Marca" --dominio tudominio.com \
+  --categoria "consultor SEO para despachos" --zona Barcelona \
+  --competidores "Competidor A,Competidor B" --historial-ia historial/ia.jsonl
+
+# Todo junto, definido en un archivo de proyecto
+node bin/auditor.js completa --proyecto ejemplos/proyecto.ejemplo.json
 ```
 
-`--render` necesita Playwright (`npm i -D playwright && npx playwright install chromium`). La clave de
-PageSpeed Insights es gratuita en Google Cloud; sin ella la API se queda enseguida sin cuota.
+<details>
+<summary><strong>Todas las opciones</strong></summary>
+
+```
+Web
+  --sitio                Audita el sitio entero (sitemap + enlaces internos)
+  --max <n>              Máximo de páginas (100)       --concurrencia <n>  Peticiones simultáneas (4)
+  --render               Compara con la página renderizada (requiere Playwright)
+  --psi                  Core Web Vitals reales vía PageSpeed Insights (PSI_API_KEY)
+  --sin-bots             No simula rastreadores de IA     --config <archivo>  Reglas propias del sitio
+
+Marca y entidad
+  --marca "<nombre>"     Nombre canónico de la marca o la persona
+  --alias "A,B"          Otras formas de escribirla
+  --perfiles "url,url"   Perfiles externos a verificar además de los del marcado
+  --linkedin-url <url>   Tu perfil o página de empresa de LinkedIn
+  --wikidata             Busca la marca en Wikidata      --sin-marca  Omite este módulo
+
+Visibilidad en IA
+  --ia                   Activa el módulo (consulta las API con tus claves; tiene coste)
+  --consultas <archivo>  Una consulta por línea  ·  o --categoria "…" [--zona "…"]
+  --competidores "A,B"   --proveedores "chatgpt,claude,perplexity,gemini"
+  --repeticiones <n>     --historial-ia <archivo>        --pais ES
+
+LinkedIn
+  --ssi "m,p,i,r[,sector,red]"   --linkedin-export <zip|carpeta>
+  --linkedin-checklist <json>    --historial-ssi <archivo>
+
+Informe
+  --html [archivo]  --md [archivo]  --json [archivo]
+  --autor "<nombre>"  --empresa "<texto>"  --detalle  --sin-color
+  --falla-en critico|alto|medio|bajo|nunca   (código de salida 1; por defecto alto)
+```
+</details>
+
+### El proyecto de auditoría
+
+Para auditorías que se repiten (un cliente cada trimestre, tu propia marca cada mes), define todo en
+un JSON y versiona el historial. Ver [`ejemplos/proyecto.ejemplo.json`](ejemplos/proyecto.ejemplo.json):
+
+```json
+{
+  "web":      { "url": "https://cliente.es", "sitio": true, "max": 200 },
+  "marca":    { "nombre": "Cliente SL", "perfiles": ["https://www.linkedin.com/company/cliente/"], "wikidata": true },
+  "ia":       { "activar": true, "consultas": "consultas.txt", "competidores": ["Competidor A"], "historial": "historial/ia.jsonl" },
+  "linkedin": { "ssi": "18.5,12,15,20", "exportacion": "LinkedInDataExport.zip", "historial": "historial/ssi.jsonl" },
+  "informe":  { "html": "informes/cliente.html", "autor": "Tu nombre" }
+}
+```
 
 ### El informe
 
-- **Terminal**: hallazgos ordenados por gravedad y número de páginas afectadas; los casos idénticos en
-  muchas URLs se agrupan en una línea.
-- **HTML**: un único archivo autocontenido, con resumen ejecutivo, estado por área, prioridades,
-  todos los hallazgos con su explicación y solución, tabla de rastreadores de IA, páginas analizadas y
-  metodología. Modo claro y oscuro, adaptado a móvil y preparado para **imprimir o guardar como PDF**.
-- **JSON**: todo lo anterior estructurado, para guardar histórico y comparar entre meses.
-- **Markdown**: para pegar en un documento o en un ticket.
+- **Terminal**: ordenado por gravedad y número de páginas afectadas; los casos idénticos se agrupan.
+- **HTML**: un único archivo autocontenido con resumen, estado por área, prioridades y todos los
+  hallazgos con su explicación y solución. Incluye además:
+  - el SSI con su plan de acción y la tabla de visibilidad en IA;
+  - los perfiles de la marca y la lista de verificación manual;
+  - la metodología y los límites.
 
-Severidades: **crítico** (la web no se indexa o no se puede leer), **alto** (pierdes visibilidad de
-forma directa), **medio**, **bajo** y **info** (contexto, no requiere acción).
+  Modo claro y oscuro, adaptado a móvil e imprimible como PDF.
+- **JSON** para guardar histórico o integrarlo en otras herramientas, y **Markdown** para documentos.
 
-### Reglas propias de un sitio
+Severidades: **crítico** (no se indexa o no se puede leer), **alto** (pérdida directa de
+visibilidad), **medio**, **bajo** e **info** (contexto, sin acción).
 
-Lo específico de cada proyecto va en un JSON aparte (`--config`), no en el código. Ver
-[`ejemplos/config.ejemplo.json`](ejemplos/config.ejemplo.json):
+### Reglas propias de cada sitio
 
-- `terminosProhibidos` / `listaBlancaTerminos`: restos de un posicionamiento anterior, buscados
-  también en title, meta, H1 y `alt`, con las páginas donde siguen siendo correctos.
-- `coherencia`: expresiones regulares de datos que deben decirse igual en todas las páginas (precio,
-  teléfono, una lista que se repite…). Dos versiones del mismo dato = aviso.
-- `exentasDeLongitud`, `huerfanasAdrede`, `imagenesEager`, `imagenesIgnoradas`, `minPalabras`,
-  `maxKBInmediato`, `seguirParametros`.
+[`ejemplos/config.ejemplo.json`](ejemplos/config.ejemplo.json) (con `--config` o `web.reglas`):
 
----
-
-## Lo que NO hace
-
-- **No consulta a los modelos.** No dice si ChatGPT te cita hoy. Eso se mide preguntando con un
-  registro repetible (herramienta, fecha, consulta, resultado, enlace), no con una auditoría técnica.
-- **No sustituye a Search Console ni a Bing Webmaster Tools.** Dice si la web está bien hecha, no si
-  está indexada.
-- **No puntúa del 0 al 100.** Una nota agregada mezcla lo que puedes arreglar con lo que depende del
-  alojamiento. En su lugar, cada área tiene un estado y cada hallazgo una prioridad.
-- **No sustituye el criterio.** Las comprobaciones de contenido (respuesta directa, fuentes, datos)
-  son heurísticas: señalan dónde mirar.
+- términos de un posicionamiento anterior que no deberían quedar;
+- datos que deben decirse igual en todas las páginas;
+- páginas exentas de longitud y huérfanas intencionadas;
+- imágenes que se ignoran y umbrales propios.
 
 ---
 
-## Calibración
+## Principios
 
-Cada regla se ha contrastado con un caso que debería pasarla limpio. Algunas correcciones que
-salieron de auditar webs reales:
+- **Una regla mal calibrada es peor que no tenerla.** Cada comprobación tiene una prueba con un caso
+  que debería pasar limpio, y se ha calibrado con webs reales. Algunos falsos positivos que se
+  corrigieron:
 
-| Falso positivo | Causa | Solución |
-|---|---|---|
-| «Artículo sin autor» en páginas de servicio | Yoast pone `og:type=article` en todas las páginas interiores | El tipo se deduce del JSON-LD y de la URL, no de Open Graph |
-| Titles y H1 duplicados en categorías | La paginación (`/page/2/`) los repite por diseño | Se excluye la paginación |
-| Enlaces internos con nofollow | Botones de compartir de Jetpack (`?share=linkedin`) | Se ignoran los enlaces con parámetros |
-| «Imágenes en JPEG/PNG» | El CDN sirve WebP a la misma URL `.jpg` | Se pide una muestra aceptando WebP/AVIF antes de avisar |
-| Propiedades del marcado repetidas en 60 URLs | La ficha de la entidad es global | Se valida una vez, en la portada |
-| Bloqueo de IA por 403 | Verificación de IP del alojamiento | Control con Googlebot |
-| `--render` con 403 | El alojamiento rechaza un user-agent que no cuadra con el navegador | Se usa el user-agent real del navegador |
+  | Falso positivo | Causa | Solución |
+  |---|---|---|
+  | «Artículo sin autor» en páginas de servicio | Yoast pone `og:type=article` en todas las páginas | El tipo se deduce del JSON-LD y de la URL |
+  | Titles duplicados en categorías | La paginación (`/page/2/`) los repite por diseño | Se excluye la paginación |
+  | Enlaces internos con nofollow | Botones de compartir (`?share=`) | Se ignoran los enlaces con parámetros |
+  | «Imágenes en JPEG/PNG» | El CDN sirve WebP a la misma URL | Se comprueba la negociación antes de avisar |
+  | Bloqueo de bots de IA por un 403 | Verificación de IP del alojamiento | Control con Googlebot |
+  | Perfil de LinkedIn «roto» | LinkedIn responde 999 a cualquier petición automática | Se marca como no verificable |
+
+- **Sin puntuación de 0 a 100.** Una nota agregada mezcla lo que depende de ti con lo que depende
+  del alojamiento o de terceros. Cada área tiene un estado y cada hallazgo una prioridad.
+- **Sin promesas.** Ninguna auditoría garantiza aparecer en ChatGPT. Lo que se puede hacer es quitar
+  obstáculos técnicos, definir bien la entidad, responder mejor que otros y medir con método.
+- **Privacidad.** Los datos de LinkedIn se procesan en local; las claves de API se leen del entorno
+  y no se guardan en informes ni historiales.
+
+## Lo que no hace
+
+- No sustituye a Google Search Console ni a Bing Webmaster Tools, que dicen qué está indexado.
+- No mide enlaces entrantes ni tráfico (para eso hacen falta Search Console o herramientas de pago).
+- No automatiza LinkedIn ni lee perfiles de terceros.
 
 ---
 
-## Desarrollo
+## Contribuir
+
+Las contribuciones son bienvenidas, sobre todo los **avisos de falsos positivos**. Lee
+[CONTRIBUTING.md](CONTRIBUTING.md): cómo añadir una comprobación, la política de cero dependencias y
+las pruebas.
 
 ```bash
-npm test     # 21 pruebas: unitarias y de extremo a extremo contra servidores locales
+npm test     # pruebas unitarias y de extremo a extremo, sin internet
 ```
 
 ```
-bin/auditor.js          CLI
-src/auditoria.js        orquestador: selección de páginas, rastreo y análisis entre páginas
-src/checks/sitio.js     robots.txt, bots de IA, llms.txt, sitemaps, dominio, PageSpeed
-src/checks/pagina.js    comprobaciones de cada página
+bin/auditor.js          CLI y subcomandos (web, completa, linkedin, ia)
+src/completa.js         orquesta los cuatro módulos en un único resultado
+src/auditoria.js        auditoría web: selección de páginas, rastreo y análisis entre páginas
+src/checks/             comprobaciones de sitio y de página
+src/marca.js            marca y entidad
+src/ia.js               visibilidad en asistentes de IA
+src/linkedin.js         SSI, exportación de datos y lista de comprobación
 src/catalogo.js         texto de cada comprobación: área, por qué importa, cómo se arregla
-src/robots.js           intérprete de robots.txt (RFC 9309) y catálogo de agentes de IA
-src/jsonld.js           grafo JSON-LD y validación por tipo
-src/html.js             analizador HTML sin dependencias
-src/informe.js          agrupación y priorización
+src/robots.js · src/jsonld.js · src/html.js · src/util/csv.js   intérpretes sin dependencias
 src/report/             terminal, HTML y Markdown
 ```
 
-`auditor-geo.js` y `auditor-web.js` se mantienen por compatibilidad con la versión 1: el primero
-audita una página y el segundo equivale a `--sitio`.
+`auditor-geo.js` y `auditor-web.js` se mantienen por compatibilidad con la versión 1.
+
+## Autor y licencia
+
+Creado por **Alex Vendrell Torres** ([alexvendrell.com](https://alexvendrell.com) ·
+[LinkedIn](https://www.linkedin.com/in/alex-vendrell-torres/)). Licencia [MIT](LICENSE).
 
 ---
 
-## Autor
+## English summary
 
-**Alex Vendrell Torres**: diseño web, SEO, GEO y AEO. Sabadell (Barcelona).
+**auditor-geo** is an open-source, zero-dependency Node.js CLI that audits websites and brands for
+SEO, GEO (Generative Engine Optimization) and AEO (Answer Engine Optimization). It runs four modules:
 
-- Web: [alexvendrell.com](https://alexvendrell.com)
-- LinkedIn: [alex-vendrell-torres](https://www.linkedin.com/in/alex-vendrell-torres/)
+- **Web**: 100+ checks, with robots.txt parsed per RFC 9309 for 18 AI crawlers and real access
+  tested against a Googlebot control to avoid false positives.
+- **Brand and entity**: naming consistency, entity markup, and external profiles.
+- **AI visibility**: brand mentions and citations in ChatGPT, Claude, Perplexity and Gemini via
+  their APIs.
+- **LinkedIn**: Social Selling Index study and analysis of the official data export, processed
+  locally.
 
-## Licencia
+The output is a prioritized terminal, HTML, Markdown or JSON report. The interface and reports are
+in Spanish; contributions to translate them are welcome.
 
-MIT
+```bash
+node bin/auditor.js https://example.com --sitio --html
+```

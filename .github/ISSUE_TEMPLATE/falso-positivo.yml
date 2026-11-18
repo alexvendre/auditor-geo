@@ -1,0 +1,30 @@
+name: Falso positivo
+description: El auditor marca como problema algo que no lo es
+labels: [falso-positivo]
+body:
+  - type: markdown
+    attributes:
+      value: Los falsos positivos son los fallos más importantes de este proyecto. Gracias por avisar.
+  - type: input
+    id: comprobacion
+    attributes:
+      label: Comprobación
+      description: El título del hallazgo tal como sale en el informe
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL donde ocurre (si es pública)
+  - type: textarea
+    id: porque
+    attributes:
+      label: Por qué no es un problema
+      description: Qué hace la página realmente y por qué la regla se equivoca (plugin, tema, CDN, decisión intencionada…)
+    validations:
+      required: true
+  - type: textarea
+    id: salida
+    attributes:
+      label: Salida del auditor
+      render: text

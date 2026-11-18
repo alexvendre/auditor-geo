@@ -11,8 +11,8 @@ function terminal(inf, { color = true, detalle = false } = {}) {
   const etiqueta = (s) => `${c[s]}${(' ' + NOMBRE_SEV[s].toUpperCase() + ' ').padEnd(10)}${c.off}`;
 
   L.push('');
-  L.push(`${c.neg}Auditoría SEO · GEO · AEO${c.off}  ${m.url}`);
-  L.push(`${c.dim}${m.modo === 'sitio' ? `${m.paginasHtml} páginas analizadas` : 'Una página'} · ${new Date(m.fecha).toLocaleString('es-ES')} · ${m.duracionS} s · auditor-geo ${m.version}${c.off}`);
+  L.push(`${c.neg}${titulo(m)}${c.off}  ${m.url || (m.titulo !== 'LinkedIn' ? m.titulo : '')}`);
+  L.push(`${c.dim}${alcance(m)} · ${new Date(m.fecha).toLocaleString('es-ES')} · ${m.duracionS} s · auditor-geo ${m.version}${c.off}`);
 
   const s = inf.resumen.porSev;
   L.push('');
@@ -21,6 +21,8 @@ function terminal(inf, { color = true, detalle = false } = {}) {
     const icono = a.estado === 'mal' ? `${c.alto}●${c.off}` : a.estado === 'mejorable' ? `${c.medio}●${c.off}` : `${c.ok}●${c.off}`;
     L.push(`  ${icono} ${a.nombre.padEnd(34)} ${c.dim}${a.problemas} a revisar · ${a.correctos} correctos${c.off}`);
   }
+
+  modulos(inf, L, c);
 
   const problemas = inf.grupos.filter(g => !['ok', 'info'].includes(g.severidad));
   const info = inf.grupos.filter(g => g.severidad === 'info');
@@ -41,7 +43,7 @@ function terminal(inf, { color = true, detalle = false } = {}) {
         linea = v.urls.length === 1 ? rutas[0] + (linea ? ' — ' + linea : '')
           : (linea ? linea + ' — ' : '') + `${v.urls.length} páginas: ${rutas.slice(0, detalle ? rutas.length : 3).join(', ')}${!detalle && rutas.length > 3 ? '…' : ''}`;
       }
-      L.push(`           ${c.dim}${linea.slice(0, detalle ? 100000 : 400)}${c.off}`);
+      if (linea) L.push(`           ${c.dim}${linea.slice(0, detalle ? 100000 : 400)}${c.off}`);
     });
     if (g.variantes.length > max) L.push(`           ${c.dim}… y ${g.variantes.length - max} más (usa --detalle o el informe HTML)${c.off}`);
     if (g.arreglo) L.push(`           → ${g.arreglo}`);
@@ -64,4 +66,61 @@ function terminal(inf, { color = true, detalle = false } = {}) {
   return L.join('\n');
 }
 
-module.exports = { terminal };
+function titulo(m) {
+  const mod = m.modulos || {};
+  if (mod.web) return 'Auditoría SEO · GEO · AEO';
+  if (mod.linkedin && !mod.ia) return 'Estudio de LinkedIn';
+  if (mod.ia && !mod.linkedin) return 'Visibilidad en asistentes de IA';
+  return 'Auditoría de marca';
+}
+
+function alcance(m) {
+  const partes = [];
+  if (m.modo === 'sitio') partes.push(`${m.paginasHtml} páginas analizadas`);
+  else if (m.modo === 'pagina') partes.push('Una página');
+  const mod = m.modulos || {};
+  if (mod.marca) partes.push('marca');
+  if (mod.ia) partes.push('visibilidad en IA');
+  if (mod.linkedin) partes.push('LinkedIn');
+  return partes.join(' + ') || 'Auditoría';
+}
+
+const barra = (v, max, ancho = 20) => '█'.repeat(Math.round(v / max * ancho)).padEnd(ancho, '·');
+
+function modulos(inf, L, c) {
+  const li = inf.linkedin;
+  if (li && li.ssi) {
+    const s = li.ssi;
+    L.push('');
+    L.push(`${c.neg}LinkedIn · Social Selling Index${c.off}  ${c.neg}${s.total}${c.off}/100${s.sector != null ? `  ${c.dim}top ${s.sector} % sector${s.red != null ? ` · top ${s.red} % red` : ''}${c.off}` : ''}${s.tendencia ? `  ${s.tendencia.delta >= 0 ? c.ok + '+' : c.alto}${s.tendencia.delta}${c.off} ${c.dim}desde ${s.tendencia.fechaPrevia.slice(0, 10)}${c.off}` : ''}`);
+    s.pilares.forEach(p => {
+      const col = p.banda === 'débil' ? c.alto : p.banda === 'mejorable' ? c.medio : c.ok;
+      L.push(`  ${p.nombre.padEnd(36)} ${col}${barra(p.valor, 25)}${c.off} ${String(p.valor).padStart(5)}/25  ${c.dim}${p.banda}${c.off}`);
+    });
+    if (s.plan.length) {
+      L.push(`  ${c.neg}Plan para las próximas semanas${c.off}`);
+      s.plan.forEach(pl => { L.push(`  ${pl.pilar} (${pl.valor}/25)`); pl.acciones.forEach(a => L.push(`    ${c.dim}·${c.off} ${a}`)); });
+    }
+  }
+  if (li && li.exportacion) {
+    const e = li.exportacion;
+    const act = e.actividad || {};
+    L.push('');
+    L.push(`${c.neg}LinkedIn · actividad (últimos 90 días)${c.off}`);
+    L.push(`  ${[e.red ? `${e.red.contactos} contactos (+${e.red.nuevos90})` : null, `${act.publicaciones90 ?? '—'} publicaciones (~${act.porSemana ?? 0}/sem.)`, act.comentarios90 != null ? `${act.comentarios90} comentarios` : null, `${e.recomendaciones ?? 0} recomendaciones`, e.aptitudes != null ? `${e.aptitudes} aptitudes` : null].filter(Boolean).join(' · ')}`);
+  }
+  const ia = inf.ia;
+  if (ia && ia.proveedores && ia.proveedores.length) {
+    L.push('');
+    L.push(`${c.neg}Visibilidad en asistentes de IA${c.off}  ${c.dim}${ia.consultas.length} consultas${c.off}`);
+    ia.proveedores.forEach(p => L.push(`  ${p.proveedor.padEnd(26)} ${p.menciones}/${p.respuestas} menciones · ${p.enlaces} con enlace a la web`));
+  }
+  const mc = inf.marca;
+  if (mc && mc.perfiles && mc.perfiles.length) {
+    L.push('');
+    L.push(`${c.neg}Marca · perfiles externos${c.off}  ${c.dim}${mc.nombre || ''}${c.off}`);
+    mc.perfiles.forEach(p => L.push(`  ${p.plataforma.padEnd(24)} ${p.estado === 'no existe' ? c.alto : p.estado === 'enlaza a la web' ? c.ok : c.dim}${p.estado}${c.off}  ${c.dim}${p.url}${c.off}`));
+  }
+}
+
+module.exports = { terminal, alcance, titulo };

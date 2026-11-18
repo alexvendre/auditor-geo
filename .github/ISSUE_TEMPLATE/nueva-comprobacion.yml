@@ -1,0 +1,22 @@
+name: Propuesta de comprobación
+description: Una comprobación nueva de SEO, GEO, AEO, marca o LinkedIn
+labels: [mejora]
+body:
+  - type: textarea
+    id: que
+    attributes:
+      label: Qué debería comprobar
+    validations:
+      required: true
+  - type: textarea
+    id: porque
+    attributes:
+      label: Por qué importa y fuente
+      description: Documentación oficial, estudio o caso real que lo respalde
+    validations:
+      required: true
+  - type: textarea
+    id: limpio
+    attributes:
+      label: Un caso que debería pasarla limpio
+      description: Toda regla nueva necesita un ejemplo de página correcta para no dar falsos positivos

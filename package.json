@@ -1,7 +1,7 @@
 {
   "name": "auditor-geo",
-  "version": "2.0.0",
-  "description": "Auditoría SEO, GEO y AEO de páginas y sitios completos: rastreo, indexación, datos estructurados, rastreadores de IA, respuestas directas y entidad. Sin dependencias.",
+  "version": "3.0.0",
+  "description": "Auditoría SEO, GEO y AEO de webs y marcas, de código abierto: rastreo, indexación, datos estructurados, rastreadores de IA, respuestas directas, entidad, visibilidad en asistentes de IA y estudio del SSI de LinkedIn. Sin dependencias obligatorias.",
   "license": "MIT",
   "author": "Alex Vendrell Torres (https://alexvendrell.com)",
   "bin": {

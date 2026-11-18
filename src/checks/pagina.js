@@ -172,7 +172,13 @@ function datos(ctx) {
   if (nodosLD.length) {
     // La ficha de la entidad (Organization, Person, WebSite) se repite en todas las páginas:
     // se valida una vez, en la portada, para no repetir el mismo aviso en cada URL.
-    const aValidar = (ctx.tipo.esPortada || !ctx.cfg.modoSitio) ? nodosLD : nodosLD.filter(n => !J.esTipo(n, [...J.TIPOS_ENTIDAD, 'WebSite']));
+    // Los nodos globales (los que Yoast, Rank Math y similares identifican como https://dominio/#…)
+    // y todo lo que cuelga de ellos también se repiten en cada página.
+    const origen = new URL(ctx.url).origin;
+    const esGlobal = (n) => typeof n['@id'] === 'string' && n['@id'].startsWith(origen + '/#');
+    const raices = bloquesLD.filter(b => b.ok).flatMap(b => [].concat(b.datos)).flatMap(x => (x && x['@graph']) ? [].concat(x['@graph']) : [x]);
+    const propios = raices.filter(n => n && !esGlobal(n)).flatMap(J.nodos).filter(n => !J.esTipo(n, [...J.TIPOS_ENTIDAD, 'WebSite']));
+    const aValidar = (ctx.tipo.esPortada || !ctx.cfg.modoSitio) ? nodosLD : propios;
     const problemas = J.validar(aValidar);
     const req = problemas.filter(p => p.nivel === 'req');
     const rec = problemas.filter(p => p.nivel === 'rec');

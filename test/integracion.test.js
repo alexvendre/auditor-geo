@@ -184,3 +184,22 @@ test('soft 404 y llms.txt mal formado', async () => {
     assert.ok(ids(r).includes('llms-formato'));
   } finally { s.cerrar(); }
 });
+
+test('modo sitio: el marcado global (https://dominio/#…) solo se valida en la portada', async () => {
+  const s = await servidor((req) => {
+    const base = 'http://127.0.0.1:' + req.socket.localPort;
+    const ld = JSON.stringify({ '@context': 'https://schema.org', '@graph': [
+      { '@type': 'ProfessionalService', '@id': base + '/#negocio', name: 'Marca', hasOfferCatalog: { '@type': 'OfferCatalog', itemListElement: [{ '@type': 'Service', name: 'SEO' }] } },
+      { '@type': 'WebPage', '@id': base + req.url }
+    ] });
+    const head = `<script type="application/ld+json">${ld}</script>`;
+    if (req.url === '/') return { body: pagina({ title: 'Portada | Marca', head, cuerpo: `<p>${texto(350)}</p>`, enlaces: '<a href="/a/">Página A sobre auditorías</a>' }) };
+    if (req.url === '/a/') return { body: pagina({ title: 'Página A con su propio título | Marca', head, cuerpo: `<p>${'texto distinto '.repeat(200)}</p>` }) };
+  });
+  try {
+    const r = await auditar(s.url + '/', { sitio: true, bots: false, max: 5 });
+    const urls = de(r, 'jsonld-rec').concat(de(r, 'jsonld-req')).map(h => new URL(h.url).pathname);
+    assert.ok(urls.includes('/'), 'la portada sí avisa');
+    assert.ok(!urls.includes('/a/'), 'las páginas interiores no repiten el aviso del marcado global');
+  } finally { s.cerrar(); }
+});

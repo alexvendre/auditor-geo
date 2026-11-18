@@ -12,6 +12,8 @@ const J = require('./jsonld');
 const { auditarMarca } = require('./marca');
 const { visibilidadIA } = require('./ia');
 const { estudioLinkedIn } = require('./linkedin');
+const { analizarLogs } = require('./logs');
+const S = require('./checks/sitio');
 const { entrada } = require('./catalogo');
 const VERSION = require('../package.json').version;
 
@@ -74,7 +76,23 @@ async function auditoriaCompleta(p, progreso = () => {}) {
     resultado.meta.modulos.linkedin = true;
   }
 
-  resultado.meta.titulo = base ? new URL(base.meta.url).host : (p.marca && p.marca.nombre) || (p.ia && p.ia.marca) || 'LinkedIn';
+  // Registros del servidor
+  if (p.logs && p.logs.archivos && p.logs.archivos.length) {
+    progreso('Registros del servidor');
+    let sitemap = [];
+    const url = p.logs.url || (base && base.meta.url);
+    if (url) {
+      const origen = new URL(/^https?:/.test(url) ? url : 'https://' + url).origin;
+      const rob = await S.robots(origen, () => {});
+      sitemap = (await S.sitemaps(origen, rob.parsed.sitemaps, () => {})).urls.map(u => u.loc);
+    }
+    const r = await analizarLogs(p.logs.archivos, { verificar: !!p.logs.verificar, sitemap });
+    resultado.hallazgos.push(...completar(r.hallazgos));
+    resultado.registros = r.datos;
+    resultado.meta.modulos.registros = true;
+  }
+
+  resultado.meta.titulo = base ? new URL(base.meta.url).host : (p.marca && p.marca.nombre) || (p.ia && p.ia.marca) || (p.logs && p.logs.url && p.logs.url.replace(/^https?:\/\//, '').replace(/\/.*$/, '')) || (p.linkedin ? 'LinkedIn' : 'Registros');
   resultado.meta.duracionS = Math.round((Date.now() - t0) / 100) / 10;
   return resultado;
 }

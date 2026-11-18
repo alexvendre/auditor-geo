@@ -24,6 +24,7 @@ Uso
   auditor-geo linkedin --ssi 18,12,15,20 [...]    Estudio de LinkedIn (SSI, perfil y actividad)
   auditor-geo ia --marca "Nombre" [...]           Visibilidad en ChatGPT, Claude, Perplexity y Gemini
   auditor-geo generar <llms|robots|schema> <url>  Borrador del arreglo (llms.txt, bloque de robots.txt, JSON-LD)
+  auditor-geo logs <access.log ...> [--url d]     Qué bots (de IA y buscadores) visitan la web de verdad
 
 Web
   --sitio                Audita el sitio entero (sitemap + enlaces internos)
@@ -46,6 +47,10 @@ Visibilidad en IA (consulta las API con tus claves; tiene coste)
   --proveedores "chatgpt,claude,perplexity,gemini"   (por defecto, los que tengan clave)
   --repeticiones <n>     Veces que se repite cada consulta (1)
   --historial-ia <f>     Acumula los resultados en un JSONL para comparar entre meses
+
+Registros del servidor (subcomando logs, o "logs" en el proyecto)
+  --url <dominio>        Cruza las visitas con el sitemap para ver qué páginas no visita ningún bot
+  --verificar-ip         Comprueba que las visitas vienen de las IP publicadas por cada empresa (o DNS inverso)
 
 LinkedIn
   --ssi "m,p,i,r[,sector,red]"   Las 4 puntuaciones de linkedin.com/sales/ssi (0–25) y, opcional, tu top % en sector y red
@@ -71,7 +76,7 @@ function leerArgs(argv) {
   const op = { _: [] };
   const conValor = new Set(['max', 'concurrencia', 'config', 'autor', 'empresa', 'falla-en', 'proyecto', 'marca', 'alias', 'perfiles', 'linkedin-url',
     'consultas', 'categoria', 'zona', 'competidores', 'proveedores', 'repeticiones', 'historial-ia', 'dominio', 'pais',
-    'ssi', 'linkedin-export', 'linkedin-checklist', 'historial-ssi', 'comparar', 'salida', 'tipo']);
+    'ssi', 'linkedin-export', 'linkedin-checklist', 'historial-ssi', 'comparar', 'salida', 'tipo', 'url']);
   const valorOpcional = { html: /\.html?$/i, md: /\.(md|markdown)$/i, json: /\.json$/i };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -101,6 +106,7 @@ function reglas(ruta) {
 /** Convierte las opciones de la línea de comandos en un proyecto. */
 function proyectoDesdeArgs(op, modo) {
   const url = modo === 'web' ? op._[0] : null;
+  if (modo === 'logs') return { marca: false, logs: { archivos: op._, url: op.url, verificar: !!op['verificar-ip'] }, informe: { autor: op.autor, empresa: op.empresa } };
   const p = {};
   if (url) p.web = { url, sitio: !!op.sitio, max: op.max ? Number(op.max) : undefined, concurrencia: op.concurrencia ? Number(op.concurrencia) : 4, render: !!op.render, psi: !!op.psi, bots: !op['sin-bots'], reglas: reglas(op.config) };
   p.marca = op['sin-marca'] ? false : { nombre: op.marca, alias: lista(op.alias), perfiles: lista(op.perfiles), linkedin: op['linkedin-url'], wikidata: !!op.wikidata };
@@ -128,6 +134,7 @@ function proyectoDesdeArchivo(ruta) {
     ['exportacion', 'historial'].forEach(k => { p.linkedin[k] = rel(p.linkedin[k]); });
     if (typeof p.linkedin.checklist === 'string') p.linkedin.checklist = rel(p.linkedin.checklist);
   }
+  if (p.logs && p.logs.archivos) p.logs.archivos = [].concat(p.logs.archivos).map(rel);
   if (p.ia) { p.ia.historial = rel(p.ia.historial); if (typeof p.ia.consultas === 'string') p.ia.consultas = fs.readFileSync(rel(p.ia.consultas), 'utf8').split('\n').map(x => x.trim()).filter(x => x && !x.startsWith('#')); }
   p.informe = p.informe || {};
   ['html', 'md', 'json'].forEach(k => { if (typeof p.informe[k] === 'string') p.informe[k] = rel(p.informe[k]); });
@@ -154,7 +161,7 @@ async function generar(op) {
 
 (async () => {
   const op = leerArgs(process.argv.slice(2));
-  const sub = ['completa', 'linkedin', 'ia', 'generar'].includes(op._[0]) ? op._.shift() : 'web';
+  const sub = ['completa', 'linkedin', 'ia', 'generar', 'logs'].includes(op._[0]) ? op._.shift() : 'web';
   if (sub === 'generar') return generar(op);
   if (op.help || op.ayuda || (sub === 'web' && !op._.length) || (sub === 'completa' && !op.proyecto)) {
     console.log(AYUDA);
@@ -165,6 +172,7 @@ async function generar(op) {
   try {
     proyecto = sub === 'completa' ? proyectoDesdeArchivo(op.proyecto) : proyectoDesdeArgs(op, sub);
     if (sub === 'linkedin' && !proyecto.linkedin) throw new Error('Indica al menos --ssi, --linkedin-export o --linkedin-checklist');
+    if (sub === 'logs' && !(proyecto.logs && proyecto.logs.archivos.length)) throw new Error('Indica uno o más archivos de registro: auditor-geo logs access.log [--url dominio] [--verificar-ip]');
   } catch (e) { console.error(`Configuración no válida: ${e.message}`); process.exit(2); }
 
   const jsonStdout = op.json === true;
@@ -202,7 +210,7 @@ async function generar(op) {
   if (op.autor) cfgInforme.autor = op.autor;
   if (op.empresa) cfgInforme.empresa = op.empresa;
 
-  const salida = { meta: inf.meta, resumen: inf.resumen, grupos: inf.grupos, paginas: inf.paginas, sitio: inf.sitio, marca: inf.marca, ia: inf.ia, linkedin: inf.linkedin, comparacion: inf.comparacion, avisos: inf.avisos };
+  const salida = { meta: inf.meta, resumen: inf.resumen, grupos: inf.grupos, paginas: inf.paginas, sitio: inf.sitio, marca: inf.marca, ia: inf.ia, linkedin: inf.linkedin, registros: inf.registros, comparacion: inf.comparacion, avisos: inf.avisos };
   if (jsonStdout) console.log(JSON.stringify(salida, null, 2));
   else {
     console.log(terminal(inf, { color, detalle: !!op.detalle }));

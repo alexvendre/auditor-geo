@@ -22,7 +22,8 @@ const AREAS = {
   internacional: 'Internacional',
   marca: 'Marca y entidad',
   ia: 'Visibilidad en asistentes de IA',
-  linkedin: 'LinkedIn · SSI y perfil'
+  linkedin: 'LinkedIn · SSI y perfil',
+  registros: 'Rastreo real (registros del servidor)'
 };
 
 const C = {
@@ -97,6 +98,9 @@ const C = {
   'host-duplicado': { area: 'rastreo', titulo: 'El sitio responde con y sin www',
     porque: 'Dos hosts con el mismo contenido son, para el buscador, dos sitios duplicados que compiten entre sí.',
     arreglo: 'Elige una versión y redirige la otra con un 301.' },
+  'servidor-limita': { area: 'rastreo', titulo: 'El servidor limita la frecuencia de peticiones',
+    porque: 'El alojamiento responde 429 o 503 cuando recibe muchas peticiones seguidas. Es una protección normal; afecta a esta auditoría y puede afectar a rastreadores que pidan muchas páginas a la vez.',
+    arreglo: 'Para la auditoría, repite con --concurrencia 2. Si los registros muestran 429 a bots de búsqueda, revisa el límite en el alojamiento o el CDN.' },
   'host-ok': { area: 'rastreo', titulo: 'Versiones http/www consolidadas', porque: '', arreglo: '' },
 
   /* ──────────────────────────────── GEO ──────────────────────────────── */
@@ -571,7 +575,26 @@ const C = {
   'li-checklist-sin-dato': { area: 'linkedin', titulo: 'Elementos del perfil sin comprobar',
     porque: 'No se pueden verificar automáticamente sin incumplir las condiciones de LinkedIn.',
     arreglo: 'Revísalos a mano y márcalos en la lista de comprobación (ejemplos/linkedin-checklist.json).' },
-  'li-checklist-ok': { area: 'linkedin', titulo: 'Elementos del perfil confirmados', porque: '', arreglo: '' }
+  'li-checklist-ok': { area: 'linkedin', titulo: 'Elementos del perfil confirmados', porque: '', arreglo: '' },
+
+  /* ──────────────────────────── Registros del servidor ──────────────────────────── */
+  'logs-sin-bots-ia': { area: 'registros', titulo: 'Ningún rastreador de IA visita la web',
+    porque: 'Los registros son la prueba directa: si en el periodo no aparece ningún bot de IA, los asistentes no están leyendo tu web por su cuenta, por mucho que robots.txt lo permita.',
+    arreglo: 'Comprueba el CDN o el firewall, date de alta en Bing Webmaster Tools (ChatGPT y Copilot se apoyan en Bing) y gana enlaces y menciones desde sitios que esos bots ya visitan.' },
+  'logs-bots-ia': { area: 'registros', titulo: 'Rastreadores de IA que visitan la web', porque: '', arreglo: '' },
+  'logs-bot-errores': { area: 'registros', titulo: 'Un rastreador recibe muchas respuestas de error',
+    porque: 'Si un bot de búsqueda recibe 403, 429 o 5xx de forma habitual, no puede leer esas páginas: es la confirmación de un bloqueo real (firewall, CDN, límite de peticiones) o de páginas rotas.',
+    arreglo: 'Revisa qué regla del firewall, del CDN o del plugin de seguridad responde con error a ese agente, y las URLs que dan 404.' },
+  'logs-suplantacion': { area: 'registros', titulo: 'Visitas que se hacen pasar por un bot conocido',
+    porque: 'Parte del tráfico que se identifica como ese bot no viene de las IP de la empresa. Es habitual (scrapers que se disfrazan) y explica por qué los alojamientos verifican las IP.',
+    arreglo: 'No requiere acción en la web. Si consumen recursos, se pueden bloquear por IP sin afectar al bot real.' },
+  'logs-paginas-sin-visitar': { area: 'registros', titulo: 'Páginas del sitemap que ningún bot de búsqueda ha visitado',
+    porque: 'Una página que no se rastrea no se actualiza en los índices ni puede usarse como fuente. Suele indicar poco enlazado interno o falta de señales de importancia.',
+    arreglo: 'Enlaza esas páginas desde páginas muy visitadas, revisa que estén en el sitemap con lastmod correcto y pide su indexación en Search Console y Bing Webmaster Tools.' },
+  'logs-sitemap-cubierto': { area: 'registros', titulo: 'Todas las páginas del sitemap reciben visitas de bots', porque: '', arreglo: '' },
+  'logs-solo-entrenamiento': { area: 'registros', titulo: 'Solo llegan bots de entrenamiento',
+    porque: 'Los bots de entrenamiento recogen contenido para futuros modelos, pero no son los que permiten aparecer citado hoy en las respuestas con búsqueda.',
+    arreglo: 'Revisa que los bots de búsqueda (OAI-SearchBot, Claude-SearchBot, PerplexityBot) no estén bloqueados y que la web esté indexada en Bing.' }
 };
 
 function entrada(id) {

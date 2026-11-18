@@ -5,7 +5,7 @@
  * enlaces rotos, profundidad, coherencia).
  */
 
-const { pedir, enParalelo, UA_NAVEGADOR } = require('./http');
+const { pedir, enParalelo, UA_NAVEGADOR, estadisticas } = require('./http');
 const { analizar, contarPalabras } = require('./html');
 const { auditarPagina, normalizarTexto } = require('./checks/pagina');
 const S = require('./checks/sitio');
@@ -61,6 +61,7 @@ async function auditar(urlEntrada, op = {}) {
     hallazgos.push({ id, area: e.area, severidad, url, detalle, evidencia });
   };
 
+  estadisticas.limitadas = 0; estadisticas.fallidas = 0;
   const inicial = /^https?:\/\//i.test(urlEntrada) ? urlEntrada : 'https://' + urlEntrada;
   progreso('Leyendo la página de entrada');
   const portada = await pedir(inicial, { ua: UA_NAVEGADOR });
@@ -129,6 +130,7 @@ async function auditar(urlEntrada, op = {}) {
       paginas.push(reg);
       const hp = h(reg.finalUrl || reg.url);
       if (reg.status !== 200) {
+        if (reg.status === 429) { h(reg.url)('http-error', 'info', 'HTTP 429: el servidor limitó las peticiones del auditor; no es un error de la página'); continue; }
         h(reg.url)('http-error', reg.status >= 500 || reg.status === 0 ? 'critico' : 'alto', `HTTP ${reg.status}${reg.res.error ? ' — ' + reg.res.error : ''}`);
         continue;
       }
@@ -212,6 +214,12 @@ async function auditar(urlEntrada, op = {}) {
     // En modo página, la portada aporta también las páginas clave de la entidad
     const doc = html[0] && html[0].doc;
     if (doc && html[0].tipo.esPortada) paginasClave(doc.anclas.map(a => a.abs || ''), hs, doc.lang);
+  }
+
+  if (estadisticas.limitadas) {
+    hs('servidor-limita', estadisticas.fallidas ? 'medio' : 'info',
+      `El servidor respondió «demasiadas peticiones» (429/503) ${estadisticas.limitadas} veces; se reintentó con espera.` +
+      (estadisticas.fallidas ? ` ${estadisticas.fallidas} peticiones siguieron fallando: esos resultados pueden estar incompletos. Repite con --concurrencia 2.` : ' Todas se completaron.'));
   }
 
   return {

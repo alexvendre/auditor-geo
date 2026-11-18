@@ -31,6 +31,12 @@ function markdown(inf) {
     L.push('', '### Plan de acción', '');
     x.plan.forEach(pl => { L.push(`**${pl.pilar}** (${pl.valor}/25)`, ''); pl.acciones.forEach(a => L.push(`- ${a}`)); L.push(''); });
   }
+  if (inf.registros) {
+    const rg = inf.registros;
+    L.push('## Rastreo real · registros del servidor', '', `${rg.validas} peticiones${rg.dias ? ` en ${rg.dias} días` : ''}.`, '', '| Agente | Visitas | Páginas | Con error | Última |', '|---|---|---|---|---|');
+    rg.bots.forEach(b => L.push(`| ${b.token} | ${b.visitas} | ${b.paginas} | ${(b.estados['4xx'] || 0) + (b.estados['5xx'] || 0)} | ${(b.ultima || '').slice(0, 10)} |`));
+    L.push('');
+  }
   if (inf.ia && inf.ia.proveedores && inf.ia.proveedores.length) {
     L.push('## Visibilidad en asistentes de IA', '', '| Asistente | Respuestas | Menciones | Con enlace |', '|---|---|---|---|');
     inf.ia.proveedores.forEach(p => L.push(`| ${p.proveedor} | ${p.respuestas} | ${p.menciones} | ${p.enlaces} |`));

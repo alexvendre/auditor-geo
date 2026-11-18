@@ -69,6 +69,7 @@ function terminal(inf, { color = true, detalle = false } = {}) {
 function titulo(m) {
   const mod = m.modulos || {};
   if (mod.web) return 'Auditoría SEO · GEO · AEO';
+  if (mod.registros && !mod.ia && !mod.linkedin) return 'Rastreo real de la web';
   if (mod.linkedin && !mod.ia) return 'Estudio de LinkedIn';
   if (mod.ia && !mod.linkedin) return 'Visibilidad en asistentes de IA';
   return 'Auditoría de marca';
@@ -82,6 +83,7 @@ function alcance(m) {
   if (mod.marca) partes.push('marca');
   if (mod.ia) partes.push('visibilidad en IA');
   if (mod.linkedin) partes.push('LinkedIn');
+  if (mod.registros) partes.push('registros del servidor');
   return partes.join(' + ') || 'Auditoría';
 }
 
@@ -119,6 +121,17 @@ function modulos(inf, L, c) {
     L.push('');
     L.push(`${c.neg}LinkedIn · actividad (últimos 90 días)${c.off}`);
     L.push(`  ${[e.red ? `${e.red.contactos} contactos (+${e.red.nuevos90})` : null, `${act.publicaciones90 ?? '—'} publicaciones (~${act.porSemana ?? 0}/sem.)`, act.comentarios90 != null ? `${act.comentarios90} comentarios` : null, `${e.recomendaciones ?? 0} recomendaciones`, e.aptitudes != null ? `${e.aptitudes} aptitudes` : null].filter(Boolean).join(' · ')}`);
+  }
+  const rg = inf.registros;
+  if (rg) {
+    L.push('');
+    L.push(`${c.neg}Rastreo real · registros del servidor${c.off}  ${c.dim}${rg.validas} peticiones${rg.dias ? ` en ${rg.dias} días` : ''}${rg.verificado ? ' · IP verificadas' : ''}${c.off}`);
+    if (!rg.bots.length) L.push(`  ${c.dim}Ningún rastreador conocido en el periodo.${c.off}`);
+    rg.bots.forEach(b => {
+      const err = (b.estados['4xx'] || 0) + (b.estados['5xx'] || 0);
+      const ver = b.verificadas != null ? `  ${c.dim}${b.verificadas} verificadas · ${b.falsas} falsas${c.off}` : '';
+      L.push(`  ${b.token.padEnd(18)} ${String(b.visitas).padStart(6)} visitas  ${String(b.paginas).padStart(4)} páginas  ${err ? c.alto : c.dim}${err} con error${c.off}${ver}  ${c.dim}${b.ultima ? 'última ' + b.ultima.slice(0, 10) : ''}${c.off}`);
+    });
   }
   const ia = inf.ia;
   if (ia && ia.proveedores && ia.proveedores.length) {

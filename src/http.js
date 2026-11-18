@@ -9,6 +9,7 @@ const UA_NAVEGADOR = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.
 const UA_AUDITOR = UA_NAVEGADOR + ' AuditorGEO/2.0 (+https://github.com/alexvendre/auditor-geo)';
 
 const cache = new Map();
+const estadisticas = { limitadas: 0, fallidas: 0 };
 
 /**
  * Pide una URL siguiendo redirecciones a mano.
@@ -23,13 +24,32 @@ async function pedir(url, opciones = {}) {
     leerCuerpo = true,
     usarCache = true,
     maxBytes = 8 * 1024 * 1024,
-    cabeceras = {}
+    cabeceras = {},
+    reintentos = 2
   } = opciones;
 
   const clave = `${metodo} ${ua} ${url} ${leerCuerpo} ${JSON.stringify(cabeceras)}`;
   if (usarCache && cache.has(clave)) return cache.get(clave);
 
+  // Si el servidor limita peticiones (429) o está saturado (503), se espera y se reintenta:
+  // sin esto, un alojamiento con límite de frecuencia daba «errores» que no eran de la web.
   const promesa = (async () => {
+    let r;
+    for (let intento = 0; intento <= reintentos; intento++) {
+      r = await unaVez();
+      if (![429, 503].includes(r.status) || intento === reintentos) break;
+      estadisticas.limitadas++;
+      const ra = Number(r.headers.get('retry-after'));
+      await new Promise(ok => setTimeout(ok, Math.min(Number.isFinite(ra) && ra > 0 ? ra * 1000 : 2000 * (intento + 1) ** 2, 15000)));
+    }
+    if ([429, 503].includes(r.status)) estadisticas.fallidas++;
+    return r;
+  })();
+
+  if (usarCache) cache.set(clave, promesa);
+  return promesa;
+
+  async function unaVez() {
     const cadena = [];
     let actual = url;
     const inicio = Date.now();
@@ -90,10 +110,7 @@ async function pedir(url, opciones = {}) {
       return { url, finalUrl: actual, status: r.status, headers: r.headers, body, cadena, ms: Date.now() - inicio, ttfb, bytes, contentType: ct };
     }
     return { url, finalUrl: actual, status: 0, headers: new Headers(), body: '', cadena, ms: Date.now() - inicio, bytes: 0, error: 'demasiadas redirecciones' };
-  })();
-
-  if (usarCache) cache.set(clave, promesa);
-  return promesa;
+  }
 }
 
 /** Ejecuta tareas con un máximo de N en paralelo. */
@@ -110,6 +127,6 @@ async function enParalelo(items, n, fn) {
   return resultados;
 }
 
-function limpiarCache() { cache.clear(); }
+function limpiarCache() { cache.clear(); estadisticas.limitadas = 0; estadisticas.fallidas = 0; }
 
-module.exports = { pedir, enParalelo, limpiarCache, UA_NAVEGADOR, UA_AUDITOR };
+module.exports = { pedir, enParalelo, limpiarCache, estadisticas, UA_NAVEGADOR, UA_AUDITOR };

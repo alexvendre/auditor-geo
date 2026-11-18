@@ -1,5 +1,14 @@
 # Cambios
 
+## 3.2.0 — 2026-11-18
+
+- **Rastreo real** (`auditor-geo logs`): análisis de registros de acceso (Combined Log Format, JSON
+  por línea, WordPress.com, `.gz`). Visitas por bot, errores, páginas del sitemap sin visitar y
+  verificación de IP contra los rangos publicados o por DNS inverso. Las IP no aparecen en el informe.
+- **Límite de peticiones**: ante un 429 o 503 el auditor espera (respetando `Retry-After`) y
+  reintenta. Si el servidor sigue limitando, lo indica en el informe en vez de marcar errores falsos.
+  Detectado al leer los registros de alexvendrell.com.
+
 ## 3.1.0 — 2026-11-18
 
 - **Comparar con una auditoría anterior** (`--comparar informe.json`): resuelto, nuevo, mejora y

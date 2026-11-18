@@ -203,3 +203,19 @@ test('modo sitio: el marcado global (https://dominio/#…) solo se valida en la 
     assert.ok(!urls.includes('/a/'), 'las páginas interiores no repiten el aviso del marcado global');
   } finally { s.cerrar(); }
 });
+
+test('límite de peticiones: reintenta tras un 429 y no lo confunde con un error de la página', async () => {
+  let vistas = 0;
+  const s = await servidor((req) => {
+    if (req.url === '/') {
+      vistas++;
+      if (vistas === 1) return { status: 429, headers: { 'retry-after': '1' }, body: 'Too Many Requests' };
+      return { body: pagina({ cuerpo: `<p>${texto(350)}</p>` }) };
+    }
+  });
+  try {
+    const r = await auditar(s.url + '/', { bots: false });
+    assert.ok(!ids(r).includes('http-error'));
+    assert.equal(de(r, 'servidor-limita')[0].severidad, 'info');
+  } finally { s.cerrar(); }
+});

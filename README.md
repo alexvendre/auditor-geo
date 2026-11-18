@@ -27,6 +27,7 @@ Node 18 o superior. **Sin dependencias obligatorias.** Licencia MIT.
 | **Marca y entidad** | ¿Está claro quién es la marca y lo confirman otras fuentes? | Nombre, ficha de la entidad, perfiles externos, Wikidata y Knowledge Graph |
 | **Visibilidad en IA** | ¿Te mencionan los asistentes cuando un cliente pregunta? | Consultas reales a sus API con búsqueda web, con historial para comparar entre meses |
 | **LinkedIn** | ¿Qué falla en tu SSI y en tu perfil, y qué hacer? | SSI, exportación oficial de datos de la cuenta y lista de comprobación |
+| **Rastreo real** | ¿Qué bots visitan de verdad la web y qué reciben? | Registros de acceso del servidor, con verificación de IP |
 
 ### 1. Web: SEO, GEO y AEO
 
@@ -173,6 +174,24 @@ Informe
 ```
 </details>
 
+### Rastreo real: registros del servidor
+
+```bash
+node bin/auditor.js logs access.log access.log.1.gz --url tudominio.com --verificar-ip --html
+```
+
+Es la única prueba directa de que los bots de IA leen tu web. robots.txt y las pruebas simuladas
+dicen si un bot *podría* entrar; los registros dicen si *entra*. Para cada rastreador (de IA y
+buscadores) muestra:
+
+- visitas, páginas distintas, respuestas con error y última visita;
+- con `--url`, las páginas del sitemap que ningún bot de búsqueda ha visitado;
+- con `--verificar-ip`, si las visitas vienen de las IP publicadas por OpenAI, Perplexity, Google
+  y Bing (o por DNS inverso), para separar el bot real de quien se hace pasar por él.
+
+Admite Combined Log Format (Apache, Nginx), JSON por línea (incluida la exportación de registros
+de WordPress.com) y archivos `.gz`. Las IP nunca aparecen en el informe.
+
 ### Comparar con la auditoría anterior
 
 ```bash
@@ -273,9 +292,6 @@ visibilidad), **medio**, **bajo** e **info** (contexto, sin acción).
 
 Ideas evaluadas tras revisar otros proyectos abiertos de GEO y SEO. Están ordenadas por valor.
 
-- **Análisis de registros del servidor**: qué bots de IA visitan de verdad la web, con qué
-  frecuencia y qué páginas. Es la única prueba directa de rastreo (con verificación de IP de los
-  rangos publicados por OpenAI, Anthropic, Perplexity, Google y Bing).
 - **Mediciones de IA programadas** con varias muestras por consulta y votación por mayoría, para
   separar tendencia de ruido. Opcionalmente, sentimiento de la mención con un modelo juez.
 - **Acción de GitHub** lista para usar en integración continua.

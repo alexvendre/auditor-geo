@@ -68,10 +68,10 @@ function politicaIA(rob, rutas, h) {
  */
 async function accesoBots(url, politica, h) {
   const nav = await pedir(url, { ua: UA_NAVEGADOR });
-  const google = await pedir(url, { ua: R.GOOGLEBOT, usarCache: false });
+  const google = await pedir(url, { ua: R.GOOGLEBOT, usarCache: false, reintentos: 0 });
   const bots = R.BOTS_IA.filter(b => b.ua && politica.find(p => p.token === b.token)?.permitido);
   const pruebas = await enParalelo(bots, 4, async (b) => {
-    const r = await pedir(url, { ua: b.ua, usarCache: false });
+    const r = await pedir(url, { ua: b.ua, usarCache: false, reintentos: 0 });
     const desafio = r.status === 200 && RE_DESAFIO.test(r.body.slice(0, 5000)) && !RE_DESAFIO.test(nav.body.slice(0, 5000));
     return { bot: b, status: r.status, bloqueado: [401, 403, 406, 429, 451, 503].includes(r.status) || r.status === 0 || desafio, desafio };
   });
